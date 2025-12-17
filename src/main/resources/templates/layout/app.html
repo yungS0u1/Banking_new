@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:fragment="page(title, active, content)">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="${title}">Banking</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+
+<body>
+<div class="app">
+    <header class="header" th:replace="~{fragments/header :: header}"></header>
+
+    <aside class="sidebar"
+           th:replace="~{fragments/sidebar :: sidebar(${active})}">
+    </aside>
+
+    <main class="main">
+        <div class="container" th:insert="${content}"></div>
+    </main>
+
+    <footer class="footer" th:replace="~{fragments/footer :: footer}"></footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/app :: page('Проверка · Banking', ${active}, ~{::content})}">
+<th:block th:fragment="content">
+    <div class="card">
+        <h2 style="margin-top:0;">Проверка</h2>
+        <p class="muted">Если ты видишь эту страницу — MVC и шаблоны работают.</p>
+    </div>
+</th:block>
+</html>

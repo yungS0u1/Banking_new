@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="sidebar(active)">
+    <div class="section-title">Навигация</div>
+    <nav class="nav">
+        <a th:href="@{/}" th:classappend="${active}=='home' ? ' active' : ''">
+            <span>🏠</span><span>Главная</span>
+        </a>
+        <a th:href="@{/applications}" th:classappend="${active}=='applications' ? ' active' : ''">
+            <span>📝</span><span>Заявки</span>
+        </a>
+        <a th:href="@{/clients}" th:classappend="${active}=='clients' ? ' active' : ''">
+            <span>👤</span><span>Клиенты</span>
+        </a>
+        <a th:href="@{/contracts}" th:classappend="${active}=='contracts' ? ' active' : ''">
+            <span>📄</span><span>Договоры</span>
+        </a>
+    </nav>
+
+    <div class="section-title">Сервис</div>
+    <nav class="nav">
+        <a th:href="@{/health}" th:classappend="${active}=='health' ? ' active' : ''">
+            <span>✅</span><span>Проверка</span>
+        </a>
+    </nav>
+</div>
+</body>
+</html>

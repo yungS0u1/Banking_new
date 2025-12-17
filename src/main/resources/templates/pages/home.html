@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/app :: page('Главная · Banking', ${active}, ~{::content})}">
+<th:block th:fragment="content">
+    <div class="card">
+        <h1 style="margin:0 0 6px;">Banking</h1>
+        <div class="muted">Главный экран системы. Дальше сделаем “Заявки” и базовые списки.</div>
+
+        <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+            <a class="btn primary" th:href="@{/applications}">Перейти к заявкам</a>
+            <a class="btn" th:href="@{/clients}">Клиенты</a>
+            <a class="btn" th:href="@{/contracts}">Договоры</a>
+        </div>
+    </div>
+
+    <div style="margin-top:14px;" class="grid">
+        <div class="card">
+            <h3 style="margin-top:0;">Заявки</h3>
+            <div class="muted">Создание, статусы, обработка.</div>
+        </div>
+        <div class="card">
+            <h3 style="margin-top:0;">Клиенты</h3>
+            <div class="muted">Карточки, контакты, проверки.</div>
+        </div>
+        <div class="card">
+            <h3 style="margin-top:0;">Договоры</h3>
+            <div class="muted">Договоры, графики, платежи.</div>
+        </div>
+    </div>
+</th:block>
+</html>

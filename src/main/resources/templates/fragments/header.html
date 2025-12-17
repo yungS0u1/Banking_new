@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="header" class="header">
+    <div class="brand">
+        <a th:href="@{/}">Banking</a>
+        <span class="badge">Internal</span>
+    </div>
+
+    <div class="muted" style="font-size: 13px;">
+        <!-- позже сюда добавим текущего пользователя -->
+        Система управления заявками
+    </div>
+</div>
+</body>
+</html>

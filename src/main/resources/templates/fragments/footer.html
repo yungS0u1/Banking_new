@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="footer">
+    <span>© <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2025</span> Banking</span>
+</div>
+</body>
+</html>
