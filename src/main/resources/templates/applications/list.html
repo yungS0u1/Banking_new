@@ -1,33 +1,63 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head><title>Applications</title></head>
-<body>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/app :: page('Заявки · Banking', ${active}, ~{::content})}">
 
-<div th:replace="fragments/menu :: menu"></div>
+<th:block th:fragment="content">
 
+    <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div>
+                <h2 style="margin:0;">Заявки</h2>
+                <div class="muted">Лизинговые заявки и их текущие статусы.</div>
+            </div>
 
-<h2>Lease Applications</h2>
+            <a class="btn primary" th:href="@{/applications/new}">Создать заявку</a>
+        </div>
+    </div>
 
-<a th:href="@{/applications/new}">Create application</a>
+    <div class="card">
+        <div style="overflow:auto;">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Номер</th>
+                    <th>Дата</th>
+                    <th>Клиент</th>
+                    <th>Объект</th>
+                    <th>Финансирование</th>
+                    <th>Статус</th>
+                </tr>
+                </thead>
 
-<table border="1">
-    <tr>
-        <th>Number</th><th>Date</th><th>Client</th><th>Asset</th><th>Financed</th><th>Status</th>
-    </tr>
-    <tr th:each="a : ${apps}">
-        <td><a th:href="@{/applications/{id}(id=${a.id})}" th:text="${a.applicationNumber}"></a></td>
-        <td th:text="${a.createdDate}"></td>
-        <td th:text="${a.client != null ? a.client.name : ''}"></td>
-        <td th:text="${a.asset != null ? a.asset.name : ''}"></td>
-        <td th:text="${a.financedAmount}"></td>
-        <td th:text="${a.status}"></td>
-    </tr>
-</table>
+                <tbody>
+                <tr th:each="a : ${apps}">
+                    <td>
+                        <a th:href="@{/applications/{id}(id=${a.id})}"
+                           th:text="${a.applicationNumber}"></a>
+                    </td>
+                    <td th:text="${a.createdDate}"></td>
+                    <td th:text="${a.client != null ? a.client.name : ''}"></td>
+                    <td th:text="${a.asset != null ? a.asset.name : ''}"></td>
+                    <td th:text="${a.financedAmount}"></td>
+                    <td>
+                        <span class="pill" th:text="${a.status}"></span>
+                    </td>
+                </tr>
 
-<p>
-    <a th:href="@{/clients}">Clients</a> |
-    <a th:href="@{/suppliers}">Suppliers</a> |
-    <a th:href="@{/assets}">Assets</a>
-</p>
-</body>
+                <tr th:if="${apps == null || #lists.isEmpty(apps)}">
+                    <td colspan="6" class="muted">Пока нет заявок.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div style="margin-top:12px;" class="muted">
+        Быстрые ссылки:
+        <a th:href="@{/clients}">Клиенты</a> ·
+        <a th:href="@{/suppliers}">Поставщики</a> ·
+        <a th:href="@{/assets}">Активы</a>
+    </div>
+
+</th:block>
 </html>

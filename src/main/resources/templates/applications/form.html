@@ -1,33 +1,67 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head><title>New Application</title></head>
-<body>
-<h2>New Lease Application</h2>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/app :: page('Создание заявки · Banking', ${active}, ~{::content})}">
 
-<form method="post" th:action="@{/applications}" th:object="${form}">
+<th:block th:fragment="content">
 
-    Client:
-    <select th:field="*{clientId}">
-        <option value="">-- select --</option>
-        <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
-    </select>
-    <br/>
+    <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div>
+                <h2 style="margin:0;">Создание заявки</h2>
+                <div class="muted">Заполни параметры — система рассчитает график платежей.</div>
+            </div>
+            <a class="btn" th:href="@{/applications}">Назад</a>
+        </div>
+    </div>
 
-    Asset:
-    <select th:field="*{assetId}">
-        <option value="">-- select --</option>
-        <option th:each="a : ${assets}" th:value="${a.id}" th:text="${a.name}"></option>
-    </select>
-    <br/>
+    <div class="card">
+        <form th:action="@{/applications}" th:object="${form}" method="post"
+              style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px;">
 
-    Advance amount: <input type="text" th:field="*{advanceAmount}"/><br/>
-    Term (months): <input type="number" th:field="*{termMonths}"/><br/>
-    Annual rate (%): <input type="text" th:field="*{annualRatePercent}"/><br/>
-    Start date: <input type="date" th:field="*{startDate}"/><br/>
+            <div>
+                <div class="muted" style="font-size:12px; margin-bottom:6px;">Клиент</div>
+                <select class="input" th:field="*{clientId}" required>
+                    <option value="" disabled selected>Выберите клиента</option>
+                    <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
+                </select>
+            </div>
 
-    <button type="submit">Create &amp; build schedule</button>
-</form>
+            <div>
+                <div class="muted" style="font-size:12px; margin-bottom:6px;">Объект лизинга</div>
+                <select class="input" th:field="*{assetId}" required>
+                    <option value="" disabled selected>Выберите объект</option>
+                    <option th:each="a : ${assets}" th:value="${a.id}"
+                            th:text="${a.name + ' — ' + a.price}"></option>
+                </select>
+            </div>
 
-<p><a th:href="@{/applications}">Back</a></p>
-</body>
+            <div>
+                <div class="muted" style="font-size:12px; margin-bottom:6px;">Аванс</div>
+                <input class="input" type="number" step="0.01" min="0" th:field="*{advanceAmount}" />
+            </div>
+
+            <div>
+                <div class="muted" style="font-size:12px; margin-bottom:6px;">Дата начала</div>
+                <input class="input" type="date" th:field="*{startDate}" required/>
+            </div>
+
+            <div>
+                <div class="muted" style="font-size:12px; margin-bottom:6px;">Срок (мес.)</div>
+                <input class="input" type="number" min="1" max="120" th:field="*{termMonths}" required/>
+            </div>
+
+            <div>
+                <div class="muted" style="font-size:12px; margin-bottom:6px;">Ставка (% годовых)</div>
+                <input class="input" type="number" step="0.01" min="0" max="100" th:field="*{annualRatePercent}" required/>
+            </div>
+
+            <div style="grid-column: 1 / -1; display:flex; gap:10px; margin-top: 6px;">
+                <button class="btn primary" type="submit">Создать</button>
+                <a class="btn" th:href="@{/applications}">Отмена</a>
+            </div>
+
+        </form>
+    </div>
+
+</th:block>
 </html>

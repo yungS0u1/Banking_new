@@ -43,9 +43,11 @@ public class LeaseApplicationController {
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("apps", appRepo.findAll());
+        model.addAttribute("active", "applications");
+        model.addAttribute("apps", appRepo.findAll()); // или сортировка, если есть
         return "applications/list";
     }
+
 
     @GetMapping("/new")
     public String createForm(Model model) {
@@ -56,6 +58,7 @@ public class LeaseApplicationController {
         form.setAdvanceAmount(new BigDecimal("0"));
         form.setStartDate(LocalDate.now().toString()); // если startDate в форме String
 
+        model.addAttribute("active", "applications");
         model.addAttribute("form", form);
         model.addAttribute("clients", clientRepo.findAll());
         model.addAttribute("assets", assetRepo.findAll());
@@ -64,7 +67,7 @@ public class LeaseApplicationController {
 
 
     @PostMapping
-    public String create(@ModelAttribute("form.html") LeaseApplicationForm form) {
+    public String create(@ModelAttribute("form") LeaseApplicationForm form) {
         LeaseApplication app = new LeaseApplication();
         app.setApplicationNumber("APP-" + System.currentTimeMillis());
         app.setCreatedDate(LocalDate.now());
@@ -111,6 +114,7 @@ public class LeaseApplicationController {
     @GetMapping("/{id}")
     public String view(@PathVariable Long id, Model model) {
         LeaseApplication app = appRepo.findById(id).orElseThrow(IllegalArgumentException::new);
+        model.addAttribute("active", "applications");
         model.addAttribute("app", app);
         model.addAttribute("schedule", scheduleRepo.findByApplicationIdOrderByPaymentNoAsc(id));
         return "applications/view";

@@ -1,75 +1,136 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head><title>Application</title></head>
-<body>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/app :: page(${ 'Заявка ' + app.applicationNumber + ' · Banking' }, ${active}, ~{::content})}">
 
-<h2 th:text="'Application ' + ${app.applicationNumber}"></h2>
+<th:block th:fragment="content">
 
-<p>
-    <b>Date:</b> <span th:text="${app.createdDate}"></span><br/>
-    <b>Client:</b> <span th:text="${app.client.name}"></span><br/>
-    <b>Asset:</b> <span th:text="${app.asset.name}"></span><br/>
-    <b>Price:</b> <span th:text="${app.assetPrice}"></span><br/>
-    <b>Advance:</b> <span th:text="${app.advanceAmount}"></span><br/>
-    <b>Financed:</b> <span th:text="${app.financedAmount}"></span><br/>
-    <b>Term:</b> <span th:text="${app.termMonths}"></span><br/>
-    <b>Annual rate:</b> <span th:text="${app.annualRatePercent}"></span><br/>
-    <b>Status:</b> <span th:text="${app.status}"></span><br/>
-</p>
+    <!-- Header card -->
+    <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+            <div>
+                <h2 style="margin:0;" th:text="${'Заявка ' + app.applicationNumber}">Заявка</h2>
+                <div class="muted" style="margin-top:4px;">
+                    Создана: <span th:text="${app.createdDate}"></span>
+                </div>
+            </div>
 
-<div style="margin: 12px 0;">
-    <form th:if="${app.status.name() == 'NEW'}"
-          method="post"
-          th:action="@{/applications/{id}/approve(id=${app.id})}">
-        <button type="submit">Approve</button>
-    </form>
-
-    <form th:if="${app.status.name() == 'NEW' || app.status.name() == 'APPROVED'}"
-          method="post"
-          th:action="@{/applications/{id}/reject(id=${app.id})}">
-        Reason:
-        <input type="text" name="reason" placeholder="Reason for rejection" required />
-        <button type="submit">Reject</button>
-    </form>
-
-    <form th:if="${app.status.name() == 'APPROVED'}"
-          method="post"
-          th:action="@{/contracts/from-application/{id}(id=${app.id})}">
-        <button type="submit">Create contract</button>
-    </form>
-
-
-    <div th:if="${app.status.name() == 'REJECTED'}">
-        <b>Rejection reason:</b> <span th:text="${app.rejectionReason}"></span>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <span class="pill" th:text="${app.status}">STATUS</span>
+                <a class="btn" th:href="@{/applications}">Назад</a>
+                <a class="btn" th:href="@{/applications/{id}/print(id=${app.id})}">Печать</a>
+            </div>
+        </div>
     </div>
 
+    <!-- Main info -->
+    <div class="grid" style="grid-template-columns: 1.2fr .8fr; margin-bottom:14px;">
+        <div class="card">
+            <h3 style="margin-top:0;">Параметры</h3>
 
-    <div th:if="${app.status.name() == 'CONTRACTED'}">
-        <i>Contract already created (status CONTRACTED)</i>
+            <div class="kv">
+                <div class="k">Клиент</div>
+                <div class="v" th:text="${app.client != null ? app.client.name : ''}"></div>
+
+                <div class="k">Объект</div>
+                <div class="v" th:text="${app.asset != null ? app.asset.name : ''}"></div>
+
+                <div class="k">Цена</div>
+                <div class="v" th:text="${app.assetPrice}"></div>
+
+                <div class="k">Аванс</div>
+                <div class="v" th:text="${app.advanceAmount}"></div>
+
+                <div class="k">Финансирование</div>
+                <div class="v" th:text="${app.financedAmount}"></div>
+
+                <div class="k">Срок (мес.)</div>
+                <div class="v" th:text="${app.termMonths}"></div>
+
+                <div class="k">Ставка (% годовых)</div>
+                <div class="v" th:text="${app.annualRatePercent}"></div>
+
+                <div class="k">Дата начала</div>
+                <div class="v" th:text="${app.startDate}"></div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="card">
+            <h3 style="margin-top:0;">Действия</h3>
+
+            <form th:if="${app.status.name() == 'NEW'}"
+                  method="post"
+                  th:action="@{/applications/{id}/approve(id=${app.id})}"
+                  style="margin-bottom:10px;">
+                <button class="btn primary" type="submit">Одобрить</button>
+            </form>
+
+            <form th:if="${app.status.name() == 'NEW' || app.status.name() == 'APPROVED'}"
+                  method="post"
+                  th:action="@{/applications/{id}/reject(id=${app.id})}"
+                  style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:10px;">
+                <div style="flex:1 1 180px;">
+                    <div class="muted" style="font-size:12px; margin-bottom:6px;">Причина отказа</div>
+                    <input class="input" type="text" name="reason" placeholder="Например: недостаточно документов" required />
+                </div>
+                <button class="btn" type="submit">Отклонить</button>
+            </form>
+
+            <form th:if="${app.status.name() == 'APPROVED'}"
+                  method="post"
+                  th:action="@{/contracts/from-application/{id}(id=${app.id})}">
+                <button class="btn" type="submit">Создать договор</button>
+            </form>
+
+            <div th:if="${app.status.name() == 'REJECTED'}" style="margin-top:10px;">
+                <div class="muted" style="font-size:12px;">Причина отказа</div>
+                <div th:text="${app.rejectionReason}"></div>
+            </div>
+
+            <div th:if="${app.status.name() == 'CONTRACTED'}" class="muted" style="margin-top:10px;">
+                Договор уже создан (статус CONTRACTED)
+            </div>
+        </div>
     </div>
-</div>
 
+    <!-- Schedule -->
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div>
+                <h3 style="margin:0;">График платежей</h3>
+                <div class="muted">Аннуитетный график</div>
+            </div>
+        </div>
 
-<h3>Payment schedule (annuity)</h3>
-<table border="1">
-    <tr>
-        <th>#</th><th>Due date</th><th>Total</th><th>Interest</th><th>Principal</th><th>Balance</th>
-    </tr>
-    <tr th:each="r : ${schedule}">
-        <td th:text="${r.paymentNo}"></td>
-        <td th:text="${r.dueDate}"></td>
-        <td th:text="${r.paymentTotal}"></td>
-        <td th:text="${r.paymentInterest}"></td>
-        <td th:text="${r.paymentPrincipal}"></td>
-        <td th:text="${r.balanceAfter}"></td>
-    </tr>
-</table>
+        <div style="overflow:auto; margin-top:12px;">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Дата</th>
+                    <th>Платёж</th>
+                    <th>Проценты</th>
+                    <th>Тело</th>
+                    <th>Остаток</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${schedule}">
+                    <td th:text="${r.paymentNo}"></td>
+                    <td th:text="${r.dueDate}"></td>
+                    <td th:text="${r.paymentTotal}"></td>
+                    <td th:text="${r.paymentInterest}"></td>
+                    <td th:text="${r.paymentPrincipal}"></td>
+                    <td th:text="${r.balanceAfter}"></td>
+                </tr>
 
-<p>
-    <a th:href="@{/applications/{id}/print(id=${app.id})}">Print application</a>
-</p>
+                <tr th:if="${schedule == null || #lists.isEmpty(schedule)}">
+                    <td colspan="6" class="muted">График пока не сформирован.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-
-<p><a th:href="@{/applications}">Back to list</a></p>
-</body>
+</th:block>
 </html>
