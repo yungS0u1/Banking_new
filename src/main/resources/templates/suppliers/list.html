@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Suppliers</title></head>
+<body>
+
+<div th:replace="fragments/menu :: menu"></div>
+
+<h2>Suppliers</h2>
+<a th:href="@{/suppliers/new}">Add supplier</a>
+
+<table border="1">
+    <tr><th>Name</th><th>INN</th><th>Phone</th><th>Email</th></tr>
+    <tr th:each="s : ${suppliers}">
+        <td th:text="${s.name}"></td>
+        <td th:text="${s.inn}"></td>
+        <td th:text="${s.phone}"></td>
+        <td th:text="${s.email}"></td>
+    </tr>
+</table>
+
+<p><a th:href="@{/clients}">Clients</a></p>
+</body>
+</html>

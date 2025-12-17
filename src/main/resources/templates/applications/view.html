@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Application</title></head>
+<body>
+
+<h2 th:text="'Application ' + ${app.applicationNumber}"></h2>
+
+<p>
+    <b>Date:</b> <span th:text="${app.createdDate}"></span><br/>
+    <b>Client:</b> <span th:text="${app.client.name}"></span><br/>
+    <b>Asset:</b> <span th:text="${app.asset.name}"></span><br/>
+    <b>Price:</b> <span th:text="${app.assetPrice}"></span><br/>
+    <b>Advance:</b> <span th:text="${app.advanceAmount}"></span><br/>
+    <b>Financed:</b> <span th:text="${app.financedAmount}"></span><br/>
+    <b>Term:</b> <span th:text="${app.termMonths}"></span><br/>
+    <b>Annual rate:</b> <span th:text="${app.annualRatePercent}"></span><br/>
+    <b>Status:</b> <span th:text="${app.status}"></span><br/>
+</p>
+
+<div style="margin: 12px 0;">
+    <form th:if="${app.status.name() == 'NEW'}"
+          method="post"
+          th:action="@{/applications/{id}/approve(id=${app.id})}">
+        <button type="submit">Approve</button>
+    </form>
+
+    <form th:if="${app.status.name() == 'NEW' || app.status.name() == 'APPROVED'}"
+          method="post"
+          th:action="@{/applications/{id}/reject(id=${app.id})}">
+        Reason:
+        <input type="text" name="reason" placeholder="Reason for rejection" required />
+        <button type="submit">Reject</button>
+    </form>
+
+    <form th:if="${app.status.name() == 'APPROVED'}"
+          method="post"
+          th:action="@{/contracts/from-application/{id}(id=${app.id})}">
+        <button type="submit">Create contract</button>
+    </form>
+
+
+    <div th:if="${app.status.name() == 'REJECTED'}">
+        <b>Rejection reason:</b> <span th:text="${app.rejectionReason}"></span>
+    </div>
+
+
+    <div th:if="${app.status.name() == 'CONTRACTED'}">
+        <i>Contract already created (status CONTRACTED)</i>
+    </div>
+</div>
+
+
+<h3>Payment schedule (annuity)</h3>
+<table border="1">
+    <tr>
+        <th>#</th><th>Due date</th><th>Total</th><th>Interest</th><th>Principal</th><th>Balance</th>
+    </tr>
+    <tr th:each="r : ${schedule}">
+        <td th:text="${r.paymentNo}"></td>
+        <td th:text="${r.dueDate}"></td>
+        <td th:text="${r.paymentTotal}"></td>
+        <td th:text="${r.paymentInterest}"></td>
+        <td th:text="${r.paymentPrincipal}"></td>
+        <td th:text="${r.balanceAfter}"></td>
+    </tr>
+</table>
+
+<p>
+    <a th:href="@{/applications/{id}/print(id=${app.id})}">Print application</a>
+</p>
+
+
+<p><a th:href="@{/applications}">Back to list</a></p>
+</body>
+</html>

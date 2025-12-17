@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>New Client</title>
+</head>
+<body>
+<h2>New Client</h2>
+
+<form method="post" th:action="@{/clients}" th:object="${client}">
+    Name: <input type="text" th:field="*{name}"/><br/>
+    Type: <input type="text" th:field="*{clientType}"/><br/>
+    Passport/INN: <input type="text" th:field="*{identifier}"/><br/>
+    Phone: <input type="text" th:field="*{phone}"/><br/>
+    Email: <input type="text" th:field="*{email}"/><br/>
+    <button type="submit">Save</button>
+</form>
+
+</body>
+</html>

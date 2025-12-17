@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Contract Print</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .small { font-size: 12px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #000; padding: 6px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<h2 style="text-align:center;">Lease Contract</h2>
+
+<p>
+    Contract No: <b th:text="${contract.contractNumber}"></b><br/>
+    Date: <b th:text="${contract.contractDate}"></b>
+</p>
+
+<h3>Parties</h3>
+<p>
+    Lessor: <b>Leasing Company</b><br/>
+    Lessee (Client): <b th:text="${app.client.name}"></b>
+</p>
+
+<h3>Subject</h3>
+<p>
+    Asset: <b th:text="${app.asset.name}"></b><br/>
+    Serial/VIN: <b th:text="${app.asset.serialNumber}"></b><br/>
+    Supplier: <b th:text="${app.asset.supplier != null ? app.asset.supplier.name : ''}"></b>
+</p>
+
+<h3>Financial terms</h3>
+<p>
+    Price: <b th:text="${app.assetPrice}"></b><br/>
+    Advance: <b th:text="${app.advanceAmount}"></b><br/>
+    Financed amount: <b th:text="${contract.financedAmount}"></b><br/>
+    Term (months): <b th:text="${contract.termMonths}"></b><br/>
+    Annual rate (%): <b th:text="${contract.annualRatePercent}"></b><br/>
+    Start date: <b th:text="${contract.startDate}"></b>
+</p>
+
+<h3>Payment schedule</h3>
+<table>
+    <tr>
+        <th>#</th><th>Due date</th><th>Total</th><th>Interest</th><th>Principal</th><th>Balance</th>
+    </tr>
+    <tr th:each="r : ${schedule}">
+        <td th:text="${r.paymentNo}"></td>
+        <td th:text="${r.dueDate}"></td>
+        <td th:text="${r.paymentTotal}"></td>
+        <td th:text="${r.paymentInterest}"></td>
+        <td th:text="${r.paymentPrincipal}"></td>
+        <td th:text="${r.balanceAfter}"></td>
+    </tr>
+</table>
+
+<p class="small" style="margin-top:30px;">
+    Signatures:<br/><br/>
+    Lessor: ____________________ &nbsp;&nbsp; Lessee: ____________________
+</p>
+
+</body>
+</html>

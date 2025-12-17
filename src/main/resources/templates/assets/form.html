@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>New Asset</title></head>
+<body>
+<h2>New Asset</h2>
+
+<form method="post" th:action="@{/assets}" th:object="${asset}">
+    Type: <input type="text" th:field="*{assetType}" placeholder="AUTO/EQUIPMENT"/><br/>
+    Name: <input type="text" th:field="*{name}"/><br/>
+    Serial/VIN: <input type="text" th:field="*{serialNumber}"/><br/>
+    Price: <input type="text" th:field="*{price}"/><br/>
+
+    Supplier:
+    <select th:field="*{supplier}">
+        <option value="">-- none --</option>
+        <option th:each="s : ${suppliers}"
+                th:value="${s.id}"
+                th:text="${s.name}">
+        </option>
+    </select>
+    <br/>
+
+    Insurer:
+    <select th:field="*{insurer}">
+        <option value="">-- none --</option>
+        <option th:each="i : ${insurers}" th:value="${i.id}" th:text="${i.name}"></option>
+    </select>
+    <br/>
+
+
+    <button type="submit">Save</button>
+</form>
+
+<p><a th:href="@{/assets}">Back</a></p>
+</body>
+</html>

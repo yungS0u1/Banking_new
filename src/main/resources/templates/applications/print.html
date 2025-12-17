@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Application Print</title></head>
+<body>
+<h2 th:text="'Lease application ' + ${app.applicationNumber}"></h2>
+
+<p>
+    <b>Date:</b> <span th:text="${app.createdDate}"></span><br/>
+    <b>Client:</b> <span th:text="${app.client.name}"></span><br/>
+    <b>Asset:</b> <span th:text="${app.asset.name}"></span><br/>
+    <b>Price:</b> <span th:text="${app.assetPrice}"></span><br/>
+    <b>Advance:</b> <span th:text="${app.advanceAmount}"></span><br/>
+    <b>Financed:</b> <span th:text="${app.financedAmount}"></span><br/>
+    <b>Term:</b> <span th:text="${app.termMonths}"></span><br/>
+    <b>Annual rate:</b> <span th:text="${app.annualRatePercent}"></span><br/>
+    <b>Status:</b> <span th:text="${app.status}"></span><br/>
+</p>
+
+<h3>Payment schedule</h3>
+<table border="1">
+    <tr><th>#</th><th>Due date</th><th>Total</th><th>Interest</th><th>Principal</th><th>Balance</th></tr>
+    <tr th:each="p : ${schedule}">
+        <td th:text="${p.paymentNo}"></td>
+        <td th:text="${p.dueDate}"></td>
+        <td th:text="${p.paymentTotal}"></td>
+        <td th:text="${p.paymentInterest}"></td>
+        <td th:text="${p.paymentPrincipal}"></td>
+        <td th:text="${p.balanceAfter}"></td>
+    </tr>
+</table>
+
+</body>
+</html>

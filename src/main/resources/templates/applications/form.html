@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>New Application</title></head>
+<body>
+<h2>New Lease Application</h2>
+
+<form method="post" th:action="@{/applications}" th:object="${form}">
+
+    Client:
+    <select th:field="*{clientId}">
+        <option value="">-- select --</option>
+        <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
+    </select>
+    <br/>
+
+    Asset:
+    <select th:field="*{assetId}">
+        <option value="">-- select --</option>
+        <option th:each="a : ${assets}" th:value="${a.id}" th:text="${a.name}"></option>
+    </select>
+    <br/>
+
+    Advance amount: <input type="text" th:field="*{advanceAmount}"/><br/>
+    Term (months): <input type="number" th:field="*{termMonths}"/><br/>
+    Annual rate (%): <input type="text" th:field="*{annualRatePercent}"/><br/>
+    Start date: <input type="date" th:field="*{startDate}"/><br/>
+
+    <button type="submit">Create &amp; build schedule</button>
+</form>
+
+<p><a th:href="@{/applications}">Back</a></p>
+</body>
+</html>

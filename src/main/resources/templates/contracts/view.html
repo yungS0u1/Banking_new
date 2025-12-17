@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Contract</title></head>
+<body>
+
+<div th:replace="fragments/menu :: menu"></div>
+
+<h2 th:text="'Contract ' + ${contract.contractNumber}"></h2>
+
+<p>
+    <b>Date:</b> <span th:text="${contract.contractDate}"></span><br/>
+    <b>Client:</b> <span th:text="${app.client.name}"></span><br/>
+    <b>Asset:</b> <span th:text="${app.asset.name}"></span><br/>
+    <b>Financed:</b> <span th:text="${contract.financedAmount}"></span><br/>
+    <b>Term:</b> <span th:text="${contract.termMonths}"></span><br/>
+    <b>Annual rate:</b> <span th:text="${contract.annualRatePercent}"></span><br/>
+    <b>Start date:</b> <span th:text="${contract.startDate}"></span><br/>
+</p>
+
+<p>
+    <a th:href="@{/contracts/{id}/print(id=${contract.id})}">Print form</a>
+</p>
+
+<h3>Payment schedule (from application)</h3>
+<table border="1">
+    <tr>
+        <th>#</th><th>Due date</th><th>Total</th><th>Interest</th><th>Principal</th><th>Balance</th>
+    </tr>
+    <tr th:each="r : ${schedule}">
+        <td th:text="${r.paymentNo}"></td>
+        <td th:text="${r.dueDate}"></td>
+        <td th:text="${r.paymentTotal}"></td>
+        <td th:text="${r.paymentInterest}"></td>
+        <td th:text="${r.paymentPrincipal}"></td>
+        <td th:text="${r.balanceAfter}"></td>
+    </tr>
+</table>
+
+<h3>Plan vs Fact (to today)</h3>
+<p>
+    Planned paid: <b th:text="${plannedToDate}"></b><br/>
+    Actually paid: <b th:text="${paidToDate}"></b><br/>
+    Arrears: <b th:text="${arrearsToDate}"></b>
+</p>
+
+<h3>Add payment</h3>
+<form method="post" th:action="@{/contracts/{id}/payments(id=${contract.id})}" th:object="${paymentForm}">
+    Date: <input type="date" th:field="*{paymentDate}"/><br/>
+    Amount: <input type="text" th:field="*{amount}"/><br/>
+    Comment: <input type="text" th:field="*{comment}"/><br/>
+    <button type="submit">Add</button>
+</form>
+
+<h3>Actual payments</h3>
+<table border="1">
+    <tr><th>Date</th><th>Amount</th><th>Comment</th></tr>
+    <tr th:each="p : ${payments}">
+        <td th:text="${p.paymentDate}"></td>
+        <td th:text="${p.amount}"></td>
+        <td th:text="${p.comment}"></td>
+    </tr>
+</table>
+
+<h3>Charts</h3>
+
+<canvas id="chartPlanFact" width="900" height="300"></canvas>
+<br/>
+<canvas id="chartArrears" width="900" height="300"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script th:inline="javascript">
+    const contractId = [[${contract.id}]];
+
+    fetch(`/contracts/${contractId}/chart-data`)
+      .then(r => r.json())
+      .then(data => {
+        // 1) План vs Факт (накопительно)
+        new Chart(document.getElementById('chartPlanFact'), {
+          type: 'line',
+          data: {
+            labels: data.labels,
+            datasets: [
+              { label: 'Planned (cumulative)', data: data.plannedCum },
+              { label: 'Paid (cumulative)', data: data.paidCum }
+            ]
+          }
+        });
+
+        // 2) Задолженность
+        new Chart(document.getElementById('chartArrears'), {
+          type: 'bar',
+          data: {
+            labels: data.labels,
+            datasets: [
+              { label: 'Arrears', data: data.arrears }
+            ]
+          }
+        });
+      });
+</script>
+
+
+
+<p><a th:href="@{/applications/{id}(id=${app.id})}">Back to application</a></p>
+</body>
+</html>

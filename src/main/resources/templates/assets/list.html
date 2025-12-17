@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Assets</title></head>
+<body>
+
+<div th:replace="fragments/menu :: menu"></div>
+
+
+<h2>Leased Assets</h2>
+
+<a th:href="@{/assets/new}">Add asset</a>
+
+<table border="1">
+    <tr>
+        <th>Type</th><th>Name</th><th>Serial</th><th>Price</th><th>Supplier</th><th>Insurer</th>
+    </tr>
+    <tr th:each="a : ${assets}">
+        <td th:text="${a.assetType}"></td>
+        <td th:text="${a.name}"></td>
+        <td th:text="${a.serialNumber}"></td>
+        <td th:text="${a.price}"></td>
+        <td th:text="${a.supplier != null ? a.supplier.name : ''}"></td>
+        <td th:text="${a.insurer != null ? a.insurer.name : ''}"></td>
+    </tr>
+</table>
+
+
+<p>
+    <a th:href="@{/clients}">Clients</a> |
+    <a th:href="@{/suppliers}">Suppliers</a>
+    <a th:href="@{/insurers}">Insurers</a>
+
+</p>
+</body>
+</html>

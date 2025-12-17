@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Applications</title></head>
+<body>
+
+<div th:replace="fragments/menu :: menu"></div>
+
+
+<h2>Lease Applications</h2>
+
+<a th:href="@{/applications/new}">Create application</a>
+
+<table border="1">
+    <tr>
+        <th>Number</th><th>Date</th><th>Client</th><th>Asset</th><th>Financed</th><th>Status</th>
+    </tr>
+    <tr th:each="a : ${apps}">
+        <td><a th:href="@{/applications/{id}(id=${a.id})}" th:text="${a.applicationNumber}"></a></td>
+        <td th:text="${a.createdDate}"></td>
+        <td th:text="${a.client != null ? a.client.name : ''}"></td>
+        <td th:text="${a.asset != null ? a.asset.name : ''}"></td>
+        <td th:text="${a.financedAmount}"></td>
+        <td th:text="${a.status}"></td>
+    </tr>
+</table>
+
+<p>
+    <a th:href="@{/clients}">Clients</a> |
+    <a th:href="@{/suppliers}">Suppliers</a> |
+    <a th:href="@{/assets}">Assets</a>
+</p>
+</body>
+</html>

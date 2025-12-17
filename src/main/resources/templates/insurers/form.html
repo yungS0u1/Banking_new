@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>New Insurance Company</title></head>
+<body>
+<h2>New Insurance Company</h2>
+
+<form method="post" th:action="@{/insurers}" th:object="${insurer}">
+  Name: <input type="text" th:field="*{name}" required/><br/>
+  INN: <input type="text" th:field="*{inn}"/><br/>
+  Phone: <input type="text" th:field="*{phone}"/><br/>
+  Email: <input type="text" th:field="*{email}"/><br/>
+  <button type="submit">Save</button>
+</form>
+
+<p><a th:href="@{/insurers}">Back</a></p>
+</body>
+</html>
