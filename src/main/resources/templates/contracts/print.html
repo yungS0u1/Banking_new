@@ -1,65 +1,136 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Contract Print</title>
+    <meta charset="UTF-8"/>
+    <title th:text="${'Договор ' + contract.contractNumber}">Договор</title>
     <style>
-        body { font-family: Arial, sans-serif; }
-        .small { font-size: 12px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #000; padding: 6px; font-size: 12px; }
+        @page { size: A4; margin: 18mm; }
+        body { font-family: Arial, sans-serif; color: #111; }
+        h1, h2, h3 { margin: 0 0 10px; }
+        .row { display:flex; justify-content:space-between; gap: 12px; }
+        .muted { color:#555; }
+        .section { margin-top: 14px; }
+        table { width:100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { border:1px solid #ccc; padding:6px 8px; font-size: 12px; }
+        th { background: #f2f2f2; text-align:left; }
+        .sign { margin-top: 22px; display:flex; justify-content:space-between; gap: 24px; }
+        .sign .line { width: 45%; }
+        .sign .line div { border-top: 1px solid #999; margin-top: 28px; padding-top: 6px; font-size: 12px; color:#444; }
+        .no-print { margin-top: 14px; }
+        @media print { .no-print { display:none; } }
+        .stamp {
+position: fixed;
+right: 22mm;
+bottom: 30mm;
+width: 45mm;
+height: 45mm;
+opacity: .18;
+}
     </style>
 </head>
 <body>
 
-<h2 style="text-align:center;">Lease Contract</h2>
+<div class="row">
+    <div>
+        <h1 th:text="${'ДОГОВОР № ' + contract.contractNumber}">ДОГОВОР</h1>
+        <div class="muted">
+            Дата: <span th:text="${contract.contractDate}"></span>
+        </div>
+    </div>
+    <div class="muted" style="text-align:right;">
+        Banking · Internal
+    </div>
+</div>
 
-<p>
-    Contract No: <b th:text="${contract.contractNumber}"></b><br/>
-    Date: <b th:text="${contract.contractDate}"></b>
-</p>
+<div class="section">
+    <h3>Основание</h3>
+    <div>
+        Заявка: <b><span th:text="${app.applicationNumber}"></span></b>
+    </div>
+</div>
 
-<h3>Parties</h3>
-<p>
-    Lessor: <b>Leasing Company</b><br/>
-    Lessee (Client): <b th:text="${app.client.name}"></b>
-</p>
+<div class="section">
+    <h3>Стороны</h3>
 
-<h3>Subject</h3>
-<p>
-    Asset: <b th:text="${app.asset.name}"></b><br/>
-    Serial/VIN: <b th:text="${app.asset.serialNumber}"></b><br/>
-    Supplier: <b th:text="${app.asset.supplier != null ? app.asset.supplier.name : ''}"></b>
-</p>
+    <div style="margin-top:6px;">
+        <b>Лизингодатель:</b> ООО «Banking», именуемое в дальнейшем «Лизингодатель»,
+        в лице <span th:text="${companySignerName}">Иванов И.И.</span>,
+        действующего на основании <span th:text="${companySignerBasis}">Устава</span>.
+    </div>
 
-<h3>Financial terms</h3>
-<p>
-    Price: <b th:text="${app.assetPrice}"></b><br/>
-    Advance: <b th:text="${app.advanceAmount}"></b><br/>
-    Financed amount: <b th:text="${contract.financedAmount}"></b><br/>
-    Term (months): <b th:text="${contract.termMonths}"></b><br/>
-    Annual rate (%): <b th:text="${contract.annualRatePercent}"></b><br/>
-    Start date: <b th:text="${contract.startDate}"></b>
-</p>
+    <div style="margin-top:6px;">
+        <b>Лизингополучатель:</b>
+        <span th:text="${app.client != null ? app.client.name : ''}">Клиент</span>,
+        именуемый(ая/ое) в дальнейшем «Лизингополучатель».
+    </div>
+</div>
 
-<h3>Payment schedule</h3>
-<table>
-    <tr>
-        <th>#</th><th>Due date</th><th>Total</th><th>Interest</th><th>Principal</th><th>Balance</th>
-    </tr>
-    <tr th:each="r : ${schedule}">
-        <td th:text="${r.paymentNo}"></td>
-        <td th:text="${r.dueDate}"></td>
-        <td th:text="${r.paymentTotal}"></td>
-        <td th:text="${r.paymentInterest}"></td>
-        <td th:text="${r.paymentPrincipal}"></td>
-        <td th:text="${r.balanceAfter}"></td>
-    </tr>
-</table>
+<div class="section">
+    <h3>Предмет договора</h3>
+    <div>
+        Лизингодатель передаёт, а Лизингополучатель принимает в лизинг имущество:
+        <b><span th:text="${app.asset != null ? app.asset.name : ''}">Объект</span></b>.
+    </div>
+</div>
 
-<p class="small" style="margin-top:30px;">
-    Signatures:<br/><br/>
-    Lessor: ____________________ &nbsp;&nbsp; Lessee: ____________________
-</p>
+
+<div class="section">
+    <h3>Условия</h3>
+    <div><b>Сумма финансирования:</b> <span th:text="${contract.financedAmount}"></span></div>
+    <div><b>Срок (мес.):</b> <span th:text="${contract.termMonths}"></span></div>
+    <div><b>Ставка (% годовых):</b> <span th:text="${contract.annualRatePercent}"></span></div>
+    <div><b>Дата начала:</b> <span th:text="${contract.startDate}"></span></div>
+</div>
+
+<div class="section">
+    <h3>График платежей</h3>
+    <table>
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Дата</th>
+            <th>Платёж</th>
+            <th>Проценты</th>
+            <th>Тело</th>
+            <th>Остаток</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="r : ${schedule}">
+            <td th:text="${r.paymentNo}"></td>
+            <td th:text="${r.dueDate}"></td>
+            <td th:text="${r.paymentTotal}"></td>
+            <td th:text="${r.paymentInterest}"></td>
+            <td th:text="${r.paymentPrincipal}"></td>
+            <td th:text="${r.balanceAfter}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="sign">
+    <div class="line">
+        <div>
+            Лизингодатель (ООО «Banking») <br/>
+            <span class="muted" th:text="${companySignerName}">Петров П.П.</span>
+        </div>
+    </div>
+
+    <div class="line">
+        <div>
+            Лизингополучатель <br/>
+            <span class="muted" th:text="${app.client != null ? app.client.name : ''}">Клиент</span>
+        </div>
+    </div>
+</div>
+
+
+<div class="no-print muted">
+    Подсказка: Ctrl/Cmd+P → “Сохранить как PDF”.
+</div>
+
+<img class="stamp" th:src="@{/img/stamp.svg}" alt="stamp"/>
 
 </body>
 </html>
+

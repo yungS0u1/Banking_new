@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/app :: page('Договоры · Banking', ${active}, ~{::content})}">
+
+<th:block th:fragment="content">
+
+    <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div>
+                <h2 style="margin:0;">Договоры</h2>
+                <div class="muted">Договоры, созданные из одобренных заявок.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="overflow:auto;">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Номер</th>
+                    <th>Дата</th>
+                    <th>Заявка</th>
+                    <th>Клиент</th>
+                    <th>Сумма</th>
+                    <th>Срок</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="c : ${contracts}">
+                    <td>
+                        <a th:href="@{/contracts/{id}(id=${c.id})}" th:text="${c.contractNumber}"></a>
+                    </td>
+                    <td th:text="${c.contractDate}"></td>
+                    <td>
+                        <a th:href="@{/applications/{id}(id=${c.application.id})}"
+                           th:text="${c.application.applicationNumber}"></a>
+                    </td>
+                    <td th:text="${c.application.client != null ? c.application.client.name : ''}"></td>
+                    <td th:text="${c.financedAmount}"></td>
+                    <td th:text="${c.termMonths}"></td>
+                </tr>
+
+                <tr th:if="${contracts == null || #lists.isEmpty(contracts)}">
+                    <td colspan="6" class="muted">Пока нет договоров.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</th:block>
+</html>

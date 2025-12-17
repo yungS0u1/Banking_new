@@ -80,6 +80,7 @@ public class LeaseContractController {
     public String view(@PathVariable Long id, Model model) {
         LeaseContract c = contractRepo.findById(id).orElseThrow(IllegalArgumentException::new);
 
+        model.addAttribute("active", "contracts");
         model.addAttribute("contract", c);
         model.addAttribute("app", c.getApplication());
         model.addAttribute("schedule", scheduleRepo.findByApplicationIdOrderByPaymentNoAsc(c.getApplication().getId()));
@@ -94,14 +95,18 @@ public class LeaseContractController {
         model.addAttribute("paymentForm", form);
 
         // план/факт на сегодня
-        LocalDate today = LocalDate.now();
-        BigDecimal planned = analytics.plannedPaidUpTo(c.getApplication().getId(), today);
+        LocalDate today = LocalDate.now();BigDecimal planned = analytics.plannedPaidUpTo(c.getApplication().getId(), today);
         BigDecimal paid = analytics.actuallyPaidUpTo(c.getId(), today);
-        BigDecimal arrears = planned.subtract(paid);
+
+        BigDecimal diff = planned.subtract(paid);
+        BigDecimal arrears = diff.compareTo(BigDecimal.ZERO) > 0 ? diff : BigDecimal.ZERO;
+        BigDecimal overpaid = diff.compareTo(BigDecimal.ZERO) < 0 ? diff.abs() : BigDecimal.ZERO;
 
         model.addAttribute("plannedToDate", planned);
         model.addAttribute("paidToDate", paid);
         model.addAttribute("arrearsToDate", arrears);
+        model.addAttribute("overpaidToDate", overpaid);
+
 
         return "contracts/view";
     }
@@ -128,11 +133,22 @@ public class LeaseContractController {
     @GetMapping("/{id}/print")
     public String print(@PathVariable Long id, Model model) {
         LeaseContract c = contractRepo.findById(id).orElseThrow(IllegalArgumentException::new);
+        model.addAttribute("companySignerName", "Петров П.П.");
+        model.addAttribute("companySignerBasis", "Устава");
+        model.addAttribute("active", "contracts");
         model.addAttribute("contract", c);
         model.addAttribute("app", c.getApplication());
         model.addAttribute("schedule", scheduleRepo.findByApplicationIdOrderByPaymentNoAsc(c.getApplication().getId()));
         return "contracts/print";
     }
+
+    @GetMapping
+    public String list(Model model) {
+        model.addAttribute("active", "contracts");
+        model.addAttribute("contracts", contractRepo.findAll());
+        return "contracts/list";
+    }
+
 
     @GetMapping("/{id}/chart-data")
     @ResponseBody

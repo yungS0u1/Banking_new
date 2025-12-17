@@ -1,107 +1,263 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head><title>Contract</title></head>
-<body>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/app :: page(${ 'Договор ' + contract.contractNumber + ' · Banking' }, ${active}, ~{::content})}">
 
-<div th:replace="fragments/menu :: menu"></div>
+<th:block th:fragment="content">
 
-<h2 th:text="'Contract ' + ${contract.contractNumber}"></h2>
+    <!-- Header card -->
+    <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+            <div>
+                <h2 style="margin:0;" th:text="${'Договор ' + contract.contractNumber}">Договор</h2>
+                <div class="muted" style="margin-top:4px;">
+                    Дата: <span th:text="${contract.contractDate}"></span>
+                    · Заявка:
+                    <a th:href="@{/applications/{id}(id=${app.id})}" th:text="${app.applicationNumber}">APP</a>
+                </div>
+            </div>
 
-<p>
-    <b>Date:</b> <span th:text="${contract.contractDate}"></span><br/>
-    <b>Client:</b> <span th:text="${app.client.name}"></span><br/>
-    <b>Asset:</b> <span th:text="${app.asset.name}"></span><br/>
-    <b>Financed:</b> <span th:text="${contract.financedAmount}"></span><br/>
-    <b>Term:</b> <span th:text="${contract.termMonths}"></span><br/>
-    <b>Annual rate:</b> <span th:text="${contract.annualRatePercent}"></span><br/>
-    <b>Start date:</b> <span th:text="${contract.startDate}"></span><br/>
-</p>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <a class="btn" th:href="@{/contracts}">К списку</a>
+                <a class="btn" th:href="@{/contracts/{id}/print(id=${contract.id})}">Печать</a>
+            </div>
+        </div>
+    </div>
 
-<p>
-    <a th:href="@{/contracts/{id}/print(id=${contract.id})}">Print form</a>
-</p>
+    <!-- Main info + metrics -->
+    <div class="grid" style="grid-template-columns: 1.2fr .8fr; margin-bottom:14px;">
+        <div class="card">
+            <h3 style="margin-top:0;">Параметры</h3>
 
-<h3>Payment schedule (from application)</h3>
-<table border="1">
-    <tr>
-        <th>#</th><th>Due date</th><th>Total</th><th>Interest</th><th>Principal</th><th>Balance</th>
-    </tr>
-    <tr th:each="r : ${schedule}">
-        <td th:text="${r.paymentNo}"></td>
-        <td th:text="${r.dueDate}"></td>
-        <td th:text="${r.paymentTotal}"></td>
-        <td th:text="${r.paymentInterest}"></td>
-        <td th:text="${r.paymentPrincipal}"></td>
-        <td th:text="${r.balanceAfter}"></td>
-    </tr>
-</table>
+            <div class="kv">
+                <div class="k">Клиент</div>
+                <div class="v" th:text="${app.client != null ? app.client.name : ''}"></div>
 
-<h3>Plan vs Fact (to today)</h3>
-<p>
-    Planned paid: <b th:text="${plannedToDate}"></b><br/>
-    Actually paid: <b th:text="${paidToDate}"></b><br/>
-    Arrears: <b th:text="${arrearsToDate}"></b>
-</p>
+                <div class="k">Объект</div>
+                <div class="v" th:text="${app.asset != null ? app.asset.name : ''}"></div>
 
-<h3>Add payment</h3>
-<form method="post" th:action="@{/contracts/{id}/payments(id=${contract.id})}" th:object="${paymentForm}">
-    Date: <input type="date" th:field="*{paymentDate}"/><br/>
-    Amount: <input type="text" th:field="*{amount}"/><br/>
-    Comment: <input type="text" th:field="*{comment}"/><br/>
-    <button type="submit">Add</button>
-</form>
+                <div class="k">Финансирование</div>
+                <div class="v" th:text="${contract.financedAmount}"></div>
 
-<h3>Actual payments</h3>
-<table border="1">
-    <tr><th>Date</th><th>Amount</th><th>Comment</th></tr>
-    <tr th:each="p : ${payments}">
-        <td th:text="${p.paymentDate}"></td>
-        <td th:text="${p.amount}"></td>
-        <td th:text="${p.comment}"></td>
-    </tr>
-</table>
+                <div class="k">Срок (мес.)</div>
+                <div class="v" th:text="${contract.termMonths}"></div>
 
-<h3>Charts</h3>
+                <div class="k">Ставка (% годовых)</div>
+                <div class="v" th:text="${contract.annualRatePercent}"></div>
 
-<canvas id="chartPlanFact" width="900" height="300"></canvas>
-<br/>
-<canvas id="chartArrears" width="900" height="300"></canvas>
+                <div class="k">Дата начала</div>
+                <div class="v" th:text="${contract.startDate}"></div>
+            </div>
+        </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <div class="card">
+            <h3 style="margin-top:0;">План и факт</h3>
 
-<script th:inline="javascript">
-    const contractId = [[${contract.id}]];
+            <div class="metric">
+                <div class="muted">План на сегодня</div>
+                <div class="metric-value" th:text="${plannedToDate}">0</div>
+            </div>
 
-    fetch(`/contracts/${contractId}/chart-data`)
-      .then(r => r.json())
-      .then(data => {
-        // 1) План vs Факт (накопительно)
-        new Chart(document.getElementById('chartPlanFact'), {
-          type: 'line',
-          data: {
-            labels: data.labels,
-            datasets: [
-              { label: 'Planned (cumulative)', data: data.plannedCum },
-              { label: 'Paid (cumulative)', data: data.paidCum }
-            ]
-          }
-        });
+            <div class="metric">
+                <div class="muted">Оплачено</div>
+                <div class="metric-value" th:text="${paidToDate}">0</div>
+            </div>
 
-        // 2) Задолженность
-        new Chart(document.getElementById('chartArrears'), {
-          type: 'bar',
-          data: {
-            labels: data.labels,
-            datasets: [
-              { label: 'Arrears', data: data.arrears }
-            ]
-          }
-        });
-      });
-</script>
+            <div class="metric">
+                <div class="muted">Задолженность</div>
+                <div class="metric-value" th:text="${arrearsToDate}">0</div>
+            </div>
+
+            <div class="muted" style="margin-top:10px; font-size:12px;">
+                Рассчитано на текущую дату.
+            </div>
+        </div>
+    </div>
+
+    <!-- Add payment + actual payments -->
+    <div class="grid" style="grid-template-columns: 1fr 1fr; margin-bottom:14px;">
+        <div class="card">
+            <h3 style="margin-top:0;">Добавить платеж</h3>
+
+            <form method="post"
+                  th:action="@{/contracts/{id}/payments(id=${contract.id})}"
+                  th:object="${paymentForm}"
+                  style="display:grid; grid-template-columns: 1fr; gap: 12px;">
+
+                <div>
+                    <div class="muted" style="font-size:12px; margin-bottom:6px;">Дата</div>
+                    <input class="input" type="date" th:field="*{paymentDate}" required/>
+                </div>
+
+                <div>
+                    <div class="muted" style="font-size:12px; margin-bottom:6px;">Сумма</div>
+                    <input class="input" type="number" step="0.01" min="0" th:field="*{amount}" required/>
+                </div>
+
+                <div>
+                    <div class="muted" style="font-size:12px; margin-bottom:6px;">Комментарий</div>
+                    <input class="input" type="text" th:field="*{comment}" placeholder="Оплата по графику / частичное погашение"/>
+                </div>
+
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="btn primary" type="submit">Добавить</button>
+                    <a class="btn" th:href="@{/contracts/{id}(id=${contract.id})}">Обновить</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0;">Фактические платежи</h3>
+
+            <div style="overflow:auto;">
+                <table class="table" style="min-width: 520px;">
+                    <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Сумма</th>
+                        <th>Комментарий</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="p : ${payments}">
+                        <td th:text="${p.paymentDate}"></td>
+                        <td th:text="${p.amount}"></td>
+                        <td th:text="${p.comment}"></td>
+                    </tr>
+
+                    <tr th:if="${payments == null || #lists.isEmpty(payments)}">
+                        <td colspan="3" class="muted">Платежей пока нет.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule -->
+    <div class="card" style="margin-bottom:14px;">
+        <h3 style="margin-top:0;">График платежей</h3>
+        <div class="muted">Плановый график из заявки</div>
+
+        <div style="overflow:auto; margin-top:12px;">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Дата</th>
+                    <th>Платёж</th>
+                    <th>Проценты</th>
+                    <th>Тело</th>
+                    <th>Остаток</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${schedule}">
+                    <td th:text="${r.paymentNo}"></td>
+                    <td th:text="${r.dueDate}"></td>
+                    <td th:text="${r.paymentTotal}"></td>
+                    <td th:text="${r.paymentInterest}"></td>
+                    <td th:text="${r.paymentPrincipal}"></td>
+                    <td th:text="${r.balanceAfter}"></td>
+                </tr>
+
+                <tr th:if="${schedule == null || #lists.isEmpty(schedule)}">
+                    <td colspan="6" class="muted">График не найден.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="card">
+        <h3 style="margin-top:0;">Графики</h3>
+        <div class="muted">Накопительный план/факт и задолженность</div>
+
+        <div style="margin-top:12px;">
+            <canvas id="chartPlanFact" height="110"></canvas>
+        </div>
+
+        <div style="margin-top:18px;">
+            <canvas id="chartArrears" height="110"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script th:inline="javascript">
+        const contractId = [[${contract.id}]];
+
+        fetch(`/contracts/${contractId}/chart-data`)
+          .then(r => r.json())
+          .then(data => {
+
+            // План / Факт (накопительно)
+            new Chart(document.getElementById('chartPlanFact'), {
+              type: 'line',
+              data: {
+                labels: data.labels,
+                datasets: [
+                  {
+                    label: 'Planned (cumulative)',
+                    data: data.plannedCum
+                  },
+                  {
+                    label: 'Paid (cumulative)',
+                    data: data.paidCum
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: true }
+                },
+                scales: {
+                  x: {
+                    ticks: {
+                      autoSkip: true,
+                      maxTicksLimit: 8,
+                      maxRotation: 0
+                    }
+                  }
+                }
+              }
+            });
+
+            // Задолженность
+            new Chart(document.getElementById('chartArrears'), {
+              type: 'bar',
+              data: {
+                labels: data.labels,
+                datasets: [
+                  {
+                    label: 'Arrears',
+                    data: data.arrears
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { display: true }
+                },
+                scales: {
+                  x: {
+                    ticks: {
+                      autoSkip: true,
+                      maxTicksLimit: 8,
+                      maxRotation: 0
+                    }
+                  }
+                }
+              }
+            });
+
+          });
+    </script>
 
 
-
-<p><a th:href="@{/applications/{id}(id=${app.id})}">Back to application</a></p>
-</body>
+</th:block>
 </html>
