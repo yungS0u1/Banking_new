@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${'ДКП к договору ' + contract.contractNumber}">Договор купли-продажи</title>
+
+    <style>
+        @page { size: A4; margin: 18mm; }
+        body { font-family: Arial, sans-serif; color:#111; }
+        h1 { font-size: 18px; margin:0; text-transform: uppercase; }
+        h2 { font-size: 13px; margin: 16px 0 8px; }
+        .muted { color:#555; }
+        .top { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; }
+        .box { border:1px solid #bbb; padding:10px 12px; border-radius: 8px; }
+        .kv { display:grid; grid-template-columns: 240px 1fr; row-gap:6px; column-gap:12px; }
+        .k { color:#444; }
+        .hr { height:1px; background:#ccc; margin: 12px 0; }
+        .p { line-height: 1.35; font-size: 12.5px; }
+        .sign { margin-top: 22px; display:flex; justify-content:space-between; gap: 24px; }
+        .sign .line { width: 48%; }
+        .sign .line .t { margin-top: 28px; border-top: 1px solid #888; padding-top: 6px; font-size: 12px; color:#444; }
+        .no-print { margin-top: 10px; font-size: 12px; }
+        @media print { .no-print { display:none; } }
+    </style>
+</head>
+
+<body>
+
+<div class="top">
+    <div>
+        <div class="muted" th:text="${lessorName}">ООО «Banking»</div>
+        <div class="muted">Договор купли-продажи (в рамках лизинговой сделки)</div>
+    </div>
+    <div style="text-align:right;">
+        <div class="muted">Форма: ДКП-01</div>
+        <div class="muted">
+            Основание: договор лизинга № <b th:text="${contract.contractNumber}">CN-…</b>
+        </div>
+    </div>
+</div>
+
+<div class="hr"></div>
+
+<h1>ДОГОВОР КУПЛИ-ПРОДАЖИ № <span th:text="${'DKP-' + contract.contractNumber}">DKP-…</span></h1>
+<div class="muted">
+    г. ________ &nbsp;&nbsp; «___» __________ 20__ г. &nbsp;&nbsp;
+    (дата: <span th:text="${contract.contractDate}">2025-12-18</span>)
+</div>
+
+<h2>1. Стороны</h2>
+<div class="box">
+    <div class="kv">
+        <div class="k">Покупатель (лизингодатель)</div>
+        <div th:text="${lessorName}">ООО «Banking»</div>
+
+        <div class="k">Продавец (поставщик)</div>
+        <!-- ВАЖНО: если supplier в модели актива иначе называется — поправишь выражение -->
+        <div th:text="${asset != null && asset.supplier != null ? asset.supplier.name : '—'}">—</div>
+    </div>
+</div>
+
+<h2>2. Предмет договора</h2>
+<div class="box">
+    <div class="kv">
+        <div class="k">Наименование товара (предмет лизинга)</div>
+        <div th:text="${asset != null ? asset.name : '—'}">—</div>
+
+        <div class="k">Стоимость</div>
+        <div th:text="${app.assetPrice}">0</div>
+
+        <div class="k">Цель приобретения</div>
+        <div>Для последующей передачи в лизинг лизингополучателю по договору лизинга №
+            <b th:text="${contract.contractNumber}">CN-…</b>.
+        </div>
+    </div>
+</div>
+
+<h2>3. Условия поставки и оплаты</h2>
+<div class="p">
+    3.1. Продавец обязуется передать товар Покупателю, а Покупатель обязуется принять товар и оплатить его стоимость.<br/>
+    3.2. Срок поставки: ____ календарных дней с даты подписания договора.<br/>
+    3.3. Порядок оплаты: безналичный расчёт, 100% предоплата / по факту поставки (указать).<br/>
+    3.4. Документы: товарная накладная/УПД, счёт-фактура (при наличии), акт приёма-передачи.
+</div>
+
+<h2>4. Ответственность сторон</h2>
+<div class="p">
+    Стороны несут ответственность в соответствии с законодательством и условиями настоящего договора.
+</div>
+
+<h2>5. Подписи сторон</h2>
+
+<div class="sign">
+    <div class="line">
+        <div class="muted">Покупатель (лизингодатель)</div>
+        <div class="t">
+            <span th:text="${lessorSignerRole}">Директор</span> /
+            <span th:text="${lessorSigner}">Петров П.П.</span>
+        </div>
+    </div>
+
+    <div class="line">
+        <div class="muted">Продавец (поставщик)</div>
+        <div class="t">
+            __________________ / __________________
+        </div>
+    </div>
+</div>
+
+<div class="no-print muted">
+    Ctrl/Cmd+P → “Сохранить как PDF”.
+</div>
+
+</body>
+</html>

@@ -1,36 +1,72 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head><title>New Asset</title></head>
-<body>
-<h2>New Asset</h2>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/app :: page('Новый объект · Banking', ${active}, ~{::content})}">
 
-<form method="post" th:action="@{/assets}" th:object="${asset}">
-    Type: <input type="text" th:field="*{assetType}" placeholder="AUTO/EQUIPMENT"/><br/>
-    Name: <input type="text" th:field="*{name}"/><br/>
-    Serial/VIN: <input type="text" th:field="*{serialNumber}"/><br/>
-    Price: <input type="text" th:field="*{price}"/><br/>
+<th:block th:fragment="content">
 
-    Supplier:
-    <select th:field="*{supplier}">
-        <option value="">-- none --</option>
-        <option th:each="s : ${suppliers}"
-                th:value="${s.id}"
-                th:text="${s.name}">
-        </option>
-    </select>
-    <br/>
+    <div class="card" style="max-width:900px;">
+        <h2 style="margin:0 0 10px;">Новый объект</h2>
+        <div class="muted" style="margin-bottom:14px;">
+            Заполните карточку предмета лизинга (каталог). Конкретная покупка оформляется через ДКП в рамках договора.
+        </div>
 
-    Insurer:
-    <select th:field="*{insurer}">
-        <option value="">-- none --</option>
-        <option th:each="i : ${insurers}" th:value="${i.id}" th:text="${i.name}"></option>
-    </select>
-    <br/>
+        <form method="post" th:action="@{/assets}" th:object="${asset}">
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap:12px;">
+
+                <div>
+                    <div class="muted" style="margin:0 0 6px;">Наименование</div>
+                    <input class="input" type="text" th:field="*{name}" placeholder="Например: VW Transporter T6" required />
+                </div>
+
+                <div class="muted" style="margin:0 0 6px;">Тип</div>
+                <select class="input" th:field="*{assetType}" required>
+                    <option value="" disabled selected>Выберите тип</option>
+                    <option value="AUTO">Транспорт</option>
+                    <option value="EQUIPMENT">Оборудование</option>
+                </select>
 
 
-    <button type="submit">Save</button>
-</form>
+                <div>
+                    <div class="muted" style="margin:0 0 6px;">Поставщик</div>
 
-<p><a th:href="@{/assets}">Back</a></p>
-</body>
+                    <!-- Вариант 1: если в entity хранится supplierId (Long) -->
+                    <!-- <select class="input" th:field="*{supplierId}">
+                      <option value="" disabled selected>Выберите поставщика</option>
+                      <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}"></option>
+                    </select> -->
+
+                    <!-- Вариант 2: если в entity связь supplier (ManyToOne) и ты сохраняешь через контроллер -->
+                    <select class="input" name="supplierId" required>
+                        <option value="" disabled selected>Выберите поставщика</option>
+                        <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}"></option>
+                    </select>
+                </div>
+
+                <div>
+                    <div class="muted" style="margin:0 0 6px;">Страховая</div>
+                    <select class="input" name="insurerId">
+                        <option value="" selected>—</option>
+                        <option th:each="i : ${insurers}" th:value="${i.id}" th:text="${i.name}"></option>
+                    </select>
+                </div>
+
+                <div>
+                    <div class="muted" style="margin:0 0 6px;">Базовая стоимость</div>
+                    <input class="input" type="text" th:field="*{price}" placeholder="Например: 3200000" />
+                </div>
+
+                <div style="grid-column: 1 / -1;">
+                    <div class="muted" style="margin:0 0 6px;">VIN / Серийный номер</div>
+                    <input class="input" type="text" th:field="*{serialNumber}" placeholder="VIN или серийный номер" />
+                </div>
+            </div>
+
+            <div style="margin-top:14px; display:flex; gap:10px;">
+                <button class="btn primary" type="submit">Сохранить</button>
+                <a class="btn" th:href="@{/assets}">Отмена</a>
+            </div>
+        </form>
+    </div>
+
+</th:block>
 </html>

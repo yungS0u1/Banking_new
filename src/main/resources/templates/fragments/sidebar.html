@@ -13,9 +13,28 @@
         <a th:href="@{/clients}" th:classappend="${active}=='clients' ? ' active' : ''">
             <span>👤</span><span>Клиенты</span>
         </a>
+        <a th:href="@{/assets}" th:classappend="${active}=='assets' ? 'active' : ''">
+            <span>📦</span> <span>Объекты</span>
+        </a>
+        <a th:href="@{/insurers}" th:classappend="${active == 'insurers'} ? 'active'">
+            <span>🛡️</span>
+            <span>Страховые</span>
+        </a>
         <a th:href="@{/contracts}" th:classappend="${active}=='contracts' ? ' active' : ''">
             <span>📄</span><span>Договоры</span>
         </a>
+
+
+        <div class="sidebar-section">
+            <div class="sidebar-title">Отчёты</div>
+
+            <a class="sidebar-item"
+               th:classappend="${active == 'reports'} ? 'active'"
+               th:href="@{/reports}">
+                📊 Аналитика
+            </a>
+        </div>
+
     </nav>
 
     <div class="section-title">Сервис</div>

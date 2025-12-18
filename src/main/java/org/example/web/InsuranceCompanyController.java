@@ -18,12 +18,14 @@ public class InsuranceCompanyController {
 
     @GetMapping
     public String list(Model model) {
+        model.addAttribute("active", "insurers");
         model.addAttribute("insurers", repo.findAll());
         return "insurers/list";
     }
 
     @GetMapping("/new")
     public String createForm(Model model) {
+        model.addAttribute("active", "insurers");
         model.addAttribute("insurer", new InsuranceCompany());
         return "insurers/form.html";
     }

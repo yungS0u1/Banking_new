@@ -1,17 +1,46 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head><title>New Insurance Company</title></head>
-<body>
-<h2>New Insurance Company</h2>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/app :: page('Новая страховая · Banking', ${active}, ~{::content})}">
 
-<form method="post" th:action="@{/insurers}" th:object="${insurer}">
-  Name: <input type="text" th:field="*{name}" required/><br/>
-  INN: <input type="text" th:field="*{inn}"/><br/>
-  Phone: <input type="text" th:field="*{phone}"/><br/>
-  Email: <input type="text" th:field="*{email}"/><br/>
-  <button type="submit">Save</button>
-</form>
+<th:block th:fragment="content">
 
-<p><a th:href="@{/insurers}">Back</a></p>
-</body>
+  <div class="card" style="max-width:900px;">
+    <h2 style="margin:0 0 10px;">Новая страховая компания</h2>
+    <div class="muted" style="margin-bottom:14px;">
+      Заполните реквизиты для справочника.
+    </div>
+
+    <form method="post" th:action="@{/insurers}" th:object="${insurer}">
+      <div class="grid" style="grid-template-columns: 1fr 1fr; gap:12px;">
+
+        <div style="grid-column: 1 / -1;">
+          <div class="muted" style="margin:0 0 6px;">Название</div>
+          <input class="input" type="text" th:field="*{name}" placeholder="Например: Ингосстрах" required/>
+        </div>
+
+        <div>
+          <div class="muted" style="margin:0 0 6px;">ИНН</div>
+          <input class="input" type="text" th:field="*{inn}" placeholder="Например: 7705042179"/>
+        </div>
+
+        <div>
+          <div class="muted" style="margin:0 0 6px;">Телефон</div>
+          <input class="input" type="text" th:field="*{phone}" placeholder="+7-495-..." />
+        </div>
+
+        <div style="grid-column: 1 / -1;">
+          <div class="muted" style="margin:0 0 6px;">Email</div>
+          <input class="input" type="email" th:field="*{email}" placeholder="info@example.ru"/>
+        </div>
+
+      </div>
+
+      <div style="margin-top:14px; display:flex; gap:10px;">
+        <button class="btn primary" type="submit">Сохранить</button>
+        <a class="btn" th:href="@{/insurers}">Отмена</a>
+      </div>
+    </form>
+  </div>
+
+</th:block>
 </html>

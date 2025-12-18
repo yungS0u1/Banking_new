@@ -1,19 +1,56 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>New Client</title>
-</head>
-<body>
-<h2>New Client</h2>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/app :: page('Новый клиент · Banking', ${active}, ~{::content})}">
 
-<form method="post" th:action="@{/clients}" th:object="${client}">
-    Name: <input type="text" th:field="*{name}"/><br/>
-    Type: <input type="text" th:field="*{clientType}"/><br/>
-    Passport/INN: <input type="text" th:field="*{identifier}"/><br/>
-    Phone: <input type="text" th:field="*{phone}"/><br/>
-    Email: <input type="text" th:field="*{email}"/><br/>
-    <button type="submit">Save</button>
-</form>
+<th:block th:fragment="content">
 
-</body>
+    <div class="card" style="max-width:600px;">
+        <h2>Новый клиент</h2>
+
+        <form method="post" th:action="@{/clients}" th:object="${client}">
+
+            <div class="grid" style="grid-template-columns:1fr; gap:12px;">
+
+                <label>
+                    Имя
+                    <input class="input" type="text" th:field="*{name}" required/>
+                </label>
+
+                <label>
+                    Тип клиента
+                    <select class="input" th:field="*{clientType}">
+                        <option value="">—</option>
+                        <option value="FL">Физическое лицо</option>
+                        <option value="UL">Юридическое лицо</option>
+                        <option value="IP">ИП</option>
+                    </select>
+                </label>
+
+                <label>
+                    ИНН / Паспорт
+                    <input class="input" type="text" th:field="*{identifier}"/>
+                </label>
+
+                <label>
+                    Телефон
+                    <input class="input" type="text" th:field="*{phone}"/>
+                </label>
+
+                <label>
+                    Email
+                    <input class="input" type="email" th:field="*{email}"/>
+                </label>
+
+            </div>
+
+            <div style="margin-top:16px; display:flex; gap:10px;">
+                <button class="btn primary" type="submit">Сохранить</button>
+                <a class="btn" th:href="@{/clients}">Отмена</a>
+            </div>
+
+        </form>
+    </div>
+
+</th:block>
 </html>

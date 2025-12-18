@@ -1,28 +1,50 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head><title>Insurance Companies</title></head>
-<body>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/app :: page('Страховые · Banking', ${active}, ~{::content})}">
 
-<div th:replace="fragments/menu :: menu"></div>
+<th:block th:fragment="content">
 
+    <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div>
+                <h2 style="margin:0;">Страховые компании</h2>
+                <div class="muted">Справочник страховых компаний (используется в объектах лизинга).</div>
+            </div>
 
-<h2>Insurance Companies</h2>
-<a th:href="@{/insurers/new}">Add insurance company</a>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <a class="btn primary" th:href="@{/insurers/new}">Добавить страховую</a>
+            </div>
+        </div>
+    </div>
 
-<table border="1">
-    <tr><th>Name</th><th>INN</th><th>Phone</th><th>Email</th></tr>
-    <tr th:each="i : ${insurers}">
-        <td th:text="${i.name}"></td>
-        <td th:text="${i.inn}"></td>
-        <td th:text="${i.phone}"></td>
-        <td th:text="${i.email}"></td>
-    </tr>
-</table>
+    <div class="card">
+        <div style="overflow:auto;">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>ИНН</th>
+                    <th>Телефон</th>
+                    <th>Email</th>
+                </tr>
+                </thead>
+                <tbody>
 
-<p>
-    <a th:href="@{/clients}">Clients</a> |
-    <a th:href="@{/suppliers}">Suppliers</a> |
-    <a th:href="@{/assets}">Assets</a>
-</p>
-</body>
+                <tr th:each="i : ${insurers}">
+                    <td th:text="${i.name}"></td>
+                    <td th:text="${i.inn != null ? i.inn : '—'}"></td>
+                    <td th:text="${i.phone != null ? i.phone : '—'}"></td>
+                    <td th:text="${i.email != null ? i.email : '—'}"></td>
+                </tr>
+
+                <tr th:if="${insurers == null || #lists.isEmpty(insurers)}">
+                    <td colspan="4" class="muted">Пока нет страховых компаний.</td>
+                </tr>
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</th:block>
 </html>

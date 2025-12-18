@@ -1,35 +1,58 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head><title>Assets</title></head>
-<body>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/app :: page('Объекты · Banking', ${active}, ~{::content})}">
 
-<div th:replace="fragments/menu :: menu"></div>
+<th:block th:fragment="content">
 
+    <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div>
+                <h2 style="margin:0;">Объекты лизинга</h2>
+                <div class="muted">Каталог предметов лизинга (типовые активы, выбираются в заявке).</div>
+            </div>
 
-<h2>Leased Assets</h2>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <a class="btn primary" th:href="@{/assets/new}">Добавить объект</a>
+            </div>
+        </div>
+    </div>
 
-<a th:href="@{/assets/new}">Add asset</a>
+    <div class="card">
+        <div style="overflow:auto;">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Наименование</th>
+                    <th>Категория</th>
+                    <th>VIN / Серийный</th>
+                    <th>Поставщик</th>
+                    <th>Базовая стоимость</th>
+                    <th class="muted">Комментарий</th>
+                </tr>
+                </thead>
 
-<table border="1">
-    <tr>
-        <th>Type</th><th>Name</th><th>Serial</th><th>Price</th><th>Supplier</th><th>Insurer</th>
-    </tr>
-    <tr th:each="a : ${assets}">
-        <td th:text="${a.assetType}"></td>
-        <td th:text="${a.name}"></td>
-        <td th:text="${a.serialNumber}"></td>
-        <td th:text="${a.price}"></td>
-        <td th:text="${a.supplier != null ? a.supplier.name : ''}"></td>
-        <td th:text="${a.insurer != null ? a.insurer.name : ''}"></td>
-    </tr>
-</table>
+                <tbody>
+                <tr th:each="a : ${assets}">
+                    <td th:text="${a.name}"></td>
 
+                    <td th:text="${a.assetType == 'AUTO' ? 'Транспорт' : (a.assetType == 'EQUIPMENT' ? 'Оборудование' : (a.assetType ?: '—'))}"></td>
 
-<p>
-    <a th:href="@{/clients}">Clients</a> |
-    <a th:href="@{/suppliers}">Suppliers</a>
-    <a th:href="@{/insurers}">Insurers</a>
+                    <td th:text="${#strings.isEmpty(a.serialNumber) ? '—' : a.serialNumber}"></td>
 
-</p>
-</body>
+                    <td th:text="${a.supplier != null ? a.supplier.name : '—'}"></td>
+
+                    <td th:text="${a.price != null ? a.price : '—'}"></td>
+
+                    <td th:text="${a.insurer != null ? a.insurer.name : '—'}"></td>
+                </tr>
+
+                <tr th:if="${assets == null || #lists.isEmpty(assets)}">
+                    <td colspan="6" class="muted">Пока нет объектов.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</th:block>
 </html>

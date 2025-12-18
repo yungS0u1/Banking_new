@@ -1,33 +1,51 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>Clients</title>
-</head>
-<body>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/app :: page('Клиенты · Banking', ${active}, ~{::content})}">
 
-<div th:replace="fragments/menu :: menu"></div>
+<th:block th:fragment="content">
 
+    <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h2 style="margin:0;">Клиенты</h2>
+                <div class="muted">Физические и юридические лица</div>
+            </div>
 
-<h2>Clients</h2>
+            <a class="btn primary" th:href="@{/clients/new}">
+                Добавить клиента
+            </a>
+        </div>
+    </div>
 
-<a th:href="@{/clients/new}">Add client</a>
+    <div class="card">
+        <div style="overflow:auto;">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Имя</th>
+                    <th>Тип</th>
+                    <th>ИНН / Паспорт</th>
+                    <th>Телефон</th>
+                    <th>Email</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="c : ${clients}">
+                    <td th:text="${c.name}"></td>
+                    <td th:text="${c.clientType}"></td>
+                    <td th:text="${c.identifier}"></td>
+                    <td th:text="${c.phone}"></td>
+                    <td th:text="${c.email}"></td>
+                </tr>
 
-<table border="1">
-    <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>ID</th>
-        <th>Phone</th>
-        <th>Email</th>
-    </tr>
-    <tr th:each="c : ${clients}">
-        <td th:text="${c.name}"></td>
-        <td th:text="${c.clientType}"></td>
-        <td th:text="${c.identifier}"></td>
-        <td th:text="${c.phone}"></td>
-        <td th:text="${c.email}"></td>
-    </tr>
-</table>
+                <tr th:if="${#lists.isEmpty(clients)}">
+                    <td colspan="5" class="muted">Клиенты пока не добавлены</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-</body>
+</th:block>
 </html>

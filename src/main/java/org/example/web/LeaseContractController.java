@@ -201,6 +201,25 @@ public class LeaseContractController {
         return res;
     }
 
+    @GetMapping("/{id}/print-purchase")
+    public String printPurchase(@PathVariable Long id, Model model) {
+        LeaseContract c = contractRepo.findById(id).orElseThrow(IllegalArgumentException::new);
+
+        model.addAttribute("contract", c);
+        model.addAttribute("app", c.getApplication());
+        model.addAttribute("asset", c.getApplication().getAsset());
+
+        // Заглушки “банковских реквизитов” (можно потом вынести в properties)
+        model.addAttribute("lessorName", "ООО «Banking»");
+        model.addAttribute("lessorSigner", "Петров П.П.");
+        model.addAttribute("lessorSignerRole", "Директор");
+
+        // Поставщик: попробуем взять из модели (если есть), иначе — покажем “—”
+        // Ниже в шаблоне я сделаю безопасный вывод через ?:
+        return "contracts/print-purchase";
+    }
+
+
     private java.math.BigDecimal nvl(java.math.BigDecimal v) {
         return v == null ? java.math.BigDecimal.ZERO : v;
     }
