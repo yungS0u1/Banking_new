@@ -1,25 +1,24 @@
 package org.example.web;
 
+import org.example.domain.ActualPayment;
 import org.example.domain.LeaseApplication;
 import org.example.domain.LeaseContract;
+import org.example.domain.LeasedAsset;
 import org.example.domain.PaymentScheduleItem;
+import org.example.repo.ActualPaymentRepository;
 import org.example.repo.LeaseApplicationRepository;
 import org.example.repo.LeaseContractRepository;
 import org.example.repo.PaymentScheduleItemRepository;
+import org.example.service.PaymentsAnalyticsService;
+import org.example.web.dto.ActualPaymentForm;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.example.repo.ActualPaymentRepository;
-import org.example.service.PaymentsAnalyticsService;
-import org.example.web.dto.ActualPaymentForm;
-
-
-import org.example.domain.ActualPayment;
-
-import java.util.List;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.*;
 
 @Controller
 @RequestMapping("/contracts")
@@ -28,7 +27,6 @@ public class LeaseContractController {
     private final LeaseContractRepository contractRepo;
     private final LeaseApplicationRepository appRepo;
     private final PaymentScheduleItemRepository scheduleRepo;
-
     private final ActualPaymentRepository paymentRepo;
     private final PaymentsAnalyticsService analytics;
 
@@ -44,13 +42,41 @@ public class LeaseContractController {
         this.analytics = analytics;
     }
 
+    // ----------------- helpers -----------------
+
+    private String nz(String v, String def) {
+        if (v == null) return def;
+        String t = v.trim();
+        return t.isEmpty() ? def : t;
+    }
+
+    private String fmtDate(LocalDate d) {
+        if (d == null) return "___ . ___ . ______";
+        return String.format("%02d.%02d.%04d", d.getDayOfMonth(), d.getMonthValue(), d.getYear());
+    }
+
+    private String fmtMoney(BigDecimal v) {
+        if (v == null) return "0,00";
+        BigDecimal x = v.setScale(2, RoundingMode.HALF_UP);
+        return x.toPlainString().replace('.', ',');
+    }
+
+    private BigDecimal nvl(BigDecimal v) {
+        return v == null ? BigDecimal.ZERO : v;
+    }
+
+    private String fmtRate(BigDecimal v) {
+        if (v == null) return "__";
+        return v.stripTrailingZeros().toPlainString().replace('.', ',');
+    }
+
+    // ----------------- create contract -----------------
 
     @PostMapping("/from-application/{appId}")
     public String createFromApplication(@PathVariable Long appId) {
         LeaseApplication app = appRepo.findById(appId).orElseThrow(IllegalArgumentException::new);
 
         if (app.getStatus() != LeaseApplication.Status.APPROVED) {
-            // по-простому: не даём создать договор пока не APPROVED
             return "redirect:/applications/" + appId;
         }
 
@@ -77,6 +103,15 @@ public class LeaseContractController {
                 });
     }
 
+    // ----------------- list & view -----------------
+
+    @GetMapping
+    public String list(Model model) {
+        model.addAttribute("active", "contracts");
+        model.addAttribute("contracts", contractRepo.findAll());
+        return "contracts/list";
+    }
+
     @GetMapping("/{id}")
     public String view(@PathVariable Long id, Model model) {
         LeaseContract c = contractRepo.findById(id).orElseThrow(IllegalArgumentException::new);
@@ -96,7 +131,8 @@ public class LeaseContractController {
         model.addAttribute("paymentForm", form);
 
         // план/факт на сегодня
-        LocalDate today = LocalDate.now();BigDecimal planned = analytics.plannedPaidUpTo(c.getApplication().getId(), today);
+        LocalDate today = LocalDate.now();
+        BigDecimal planned = analytics.plannedPaidUpTo(c.getApplication().getId(), today);
         BigDecimal paid = analytics.actuallyPaidUpTo(c.getId(), today);
 
         BigDecimal diff = planned.subtract(paid);
@@ -108,9 +144,10 @@ public class LeaseContractController {
         model.addAttribute("arrearsToDate", arrears);
         model.addAttribute("overpaidToDate", overpaid);
 
-
         return "contracts/view";
     }
+
+    // ----------------- actual payments -----------------
 
     @PostMapping("/{id}/payments")
     public String addPayment(@PathVariable Long id, @ModelAttribute("paymentForm") ActualPaymentForm form) {
@@ -130,61 +167,36 @@ public class LeaseContractController {
         return "redirect:/contracts/" + id;
     }
 
-
-    @GetMapping("/{id}/print")
-    public String print(@PathVariable Long id, Model model) {
-        LeaseContract c = contractRepo.findById(id).orElseThrow(IllegalArgumentException::new);
-        model.addAttribute("companySignerName", "Петров П.П.");
-        model.addAttribute("companySignerBasis", "Устава");
-        model.addAttribute("active", "contracts");
-        model.addAttribute("contract", c);
-        model.addAttribute("app", c.getApplication());
-        model.addAttribute("schedule", scheduleRepo.findByApplicationIdOrderByPaymentNoAsc(c.getApplication().getId()));
-        return "contracts/print";
-    }
-
-    @GetMapping
-    public String list(Model model) {
-        model.addAttribute("active", "contracts");
-        model.addAttribute("contracts", contractRepo.findAll());
-        return "contracts/list";
-    }
-
+    // ----------------- chart data -----------------
 
     @GetMapping("/{id}/chart-data")
     @ResponseBody
-    public java.util.Map<String, Object> chartData(@PathVariable Long id) {
+    public Map<String, Object> chartData(@PathVariable Long id) {
         LeaseContract c = contractRepo.findById(id).orElseThrow(IllegalArgumentException::new);
         Long appId = c.getApplication().getId();
 
-        // План (график платежей)
-        java.util.List<org.example.domain.PaymentScheduleItem> plan =
-                scheduleRepo.findByApplicationIdOrderByPaymentNoAsc(appId);
+        List<PaymentScheduleItem> plan = scheduleRepo.findByApplicationIdOrderByPaymentNoAsc(appId);
+        List<ActualPayment> facts = paymentRepo.findByContractIdOrderByPaymentDateAsc(id);
 
-        // Факт (платежи)
-        java.util.List<org.example.domain.ActualPayment> facts =
-                paymentRepo.findByContractIdOrderByPaymentDateAsc(id);
+        List<String> labels = new ArrayList<>();
+        List<BigDecimal> plannedCum = new ArrayList<>();
+        List<BigDecimal> paidCum = new ArrayList<>();
+        List<BigDecimal> arrears = new ArrayList<>();
 
-        java.util.List<String> labels = new java.util.ArrayList<>();
-        java.util.List<java.math.BigDecimal> plannedCum = new java.util.ArrayList<>();
-        java.util.List<java.math.BigDecimal> paidCum = new java.util.ArrayList<>();
-        java.util.List<java.math.BigDecimal> arrears = new java.util.ArrayList<>();
+        BigDecimal planSum = BigDecimal.ZERO;
+        BigDecimal paidSum = BigDecimal.ZERO;
 
-        java.math.BigDecimal planSum = java.math.BigDecimal.ZERO;
-        java.math.BigDecimal paidSum = java.math.BigDecimal.ZERO;
-
-        // индекс по фактам
         int fi = 0;
 
-        for (org.example.domain.PaymentScheduleItem p : plan) {
-            labels.add(p.getDueDate().toString());
+        for (PaymentScheduleItem p : plan) {
+            labels.add(p.getDueDate() != null ? p.getDueDate().toString() : "");
 
             planSum = planSum.add(nvl(p.getPaymentTotal()));
             plannedCum.add(planSum);
 
-            // прибавляем все факты, которые <= dueDate
             while (fi < facts.size()
                     && facts.get(fi).getPaymentDate() != null
+                    && p.getDueDate() != null
                     && !facts.get(fi).getPaymentDate().isAfter(p.getDueDate())) {
                 paidSum = paidSum.add(nvl(facts.get(fi).getAmount()));
                 fi++;
@@ -194,7 +206,7 @@ public class LeaseContractController {
             arrears.add(planSum.subtract(paidSum));
         }
 
-        java.util.Map<String, Object> res = new java.util.HashMap<>();
+        Map<String, Object> res = new HashMap<>();
         res.put("labels", labels);
         res.put("plannedCum", plannedCum);
         res.put("paidCum", paidCum);
@@ -202,56 +214,118 @@ public class LeaseContractController {
         return res;
     }
 
+    // ----------------- print (old) -----------------
+
+    @GetMapping("/{id}/print")
+    public String print(@PathVariable Long id, Model model) {
+        LeaseContract c = contractRepo.findById(id).orElseThrow(IllegalArgumentException::new);
+
+        model.addAttribute("active", "contracts");
+        model.addAttribute("companySignerName", "Петров П.П.");
+        model.addAttribute("companySignerBasis", "Устава");
+
+        model.addAttribute("contract", c);
+        model.addAttribute("app", c.getApplication());
+        model.addAttribute("schedule", scheduleRepo.findByApplicationIdOrderByPaymentNoAsc(c.getApplication().getId()));
+        return "contracts/print";
+    }
+
+    // ----------------- print purchase -----------------
+
     @GetMapping("/{id}/print-purchase")
     public String printPurchase(@PathVariable Long id, Model model) {
         LeaseContract c = contractRepo.findById(id).orElseThrow(IllegalArgumentException::new);
 
+        model.addAttribute("active", "contracts");
         model.addAttribute("contract", c);
         model.addAttribute("app", c.getApplication());
-        model.addAttribute("asset", c.getApplication().getAsset());
+        model.addAttribute("asset", c.getApplication() != null ? c.getApplication().getAsset() : null);
 
-        // Заглушки “банковских реквизитов” (можно потом вынести в properties)
         model.addAttribute("lessorName", "ООО «Banking»");
         model.addAttribute("lessorSigner", "Петров П.П.");
         model.addAttribute("lessorSignerRole", "Директор");
 
-        // Поставщик: попробуем взять из модели (если есть), иначе — покажем “—”
-        // Ниже в шаблоне я сделаю безопасный вывод через ?:
         return "contracts/print-purchase";
     }
+
+    // ----------------- print lease (FIXED) -----------------
 
     @GetMapping("/{id}/print-lease")
     public String printLease(@PathVariable Long id, Model model) {
         LeaseContract c = contractRepo.findById(id).orElseThrow(IllegalArgumentException::new);
+        LeaseApplication app = c.getApplication();
+        LeasedAsset asset = app != null ? app.getAsset() : null;
 
+        model.addAttribute("active", "contracts");
         model.addAttribute("contract", c);
-        model.addAttribute("app", c.getApplication());
+        model.addAttribute("app", app);
 
-        // для текста договора полезно иметь supplier/asset/insurer
-        model.addAttribute("client", c.getApplication().getClient());
-        model.addAttribute("asset", c.getApplication().getAsset());
-        model.addAttribute("supplier", c.getApplication().getAsset() != null ? c.getApplication().getAsset().getSupplier() : null);
-        model.addAttribute("insurer", c.getApplication().getAsset() != null ? c.getApplication().getAsset().getInsurer() : null);
+        // ---- ВАЖНО: отдаём готовые строки, шаблон "тупой" ----
+
+        model.addAttribute("contractNumberStr", nz(c.getContractNumber(), "__________"));
+        model.addAttribute("contractDateStr", fmtDate(c.getContractDate()));
+
+        // Лизингодатель (заглушки)
+        model.addAttribute("lessorName", "ООО «Banking»");
+        model.addAttribute("lessorCity", "г. Москва");
+        model.addAttribute("companySignerName", "Иванов И.И.");
+        model.addAttribute("companySignerBasis", "Устава");
+
+        // Лизингополучатель
+        String clientName = (app != null && app.getClient() != null)
+                ? nz(app.getClient().getName(), "________________")
+                : "________________";
+        model.addAttribute("clientName", clientName);
+
+        // Предмет лизинга
+        String assetName = asset != null ? nz(asset.getName(), "________________") : "________________";
+        model.addAttribute("assetName", assetName);
+
+        // VIN/серийный номер (у тебя поле serialNumber)
+        String assetSerial = asset != null ? nz(asset.getSerialNumber(), "________________") : "________________";
+        model.addAttribute("assetSerial", assetSerial);
+
+        // Финансирование / срок / ставка / дата начала
+        model.addAttribute("financedStr", app != null ? fmtMoney(app.getFinancedAmount()) : "0,00");
+        model.addAttribute("termStr", (app != null && app.getTermMonths() != null) ? String.valueOf(app.getTermMonths()) : "__");
+        model.addAttribute("rateStr", app != null ? fmtRate(app.getAnnualRatePercent()) : "__");
+        model.addAttribute("startDateStr", app != null ? fmtDate(app.getStartDate()) : "___ . ___ . ______");
+
+        // Поставщик и страховая (если у сущностей есть getName())
+        String supplierName = "________________";
+        String insurerName = "________________";
+        if (asset != null) {
+            if (asset.getSupplier() != null) {
+                supplierName = nz(asset.getSupplier().getName(), "________________");
+            }
+            if (asset.getInsurer() != null) {
+                insurerName = nz(asset.getInsurer().getName(), "________________");
+            }
+        }
+        model.addAttribute("supplierName", supplierName);
+        model.addAttribute("insurerName", insurerName);
 
         return "contracts/print_lease";
     }
+
+    // ----------------- print schedule -----------------
 
     @GetMapping("/{id}/print-schedule")
     public String printSchedule(@PathVariable Long id, Model model) {
         LeaseContract c = contractRepo.findById(id).orElseThrow(IllegalArgumentException::new);
         Long appId = c.getApplication().getId();
 
+        model.addAttribute("active", "contracts");
         model.addAttribute("contract", c);
         model.addAttribute("app", c.getApplication());
-        model.addAttribute("schedule", scheduleRepo.findByApplicationIdOrderByPaymentNoAsc(appId));
 
-        // опционально: итоговые суммы
-        // (итоги можно и на thymeleaf посчитать, но проще на java)
+        List<PaymentScheduleItem> rows = scheduleRepo.findByApplicationIdOrderByPaymentNoAsc(appId);
+        model.addAttribute("schedule", rows);
+
         BigDecimal total = BigDecimal.ZERO;
         BigDecimal totalInterest = BigDecimal.ZERO;
         BigDecimal totalPrincipal = BigDecimal.ZERO;
 
-        List<PaymentScheduleItem> rows = scheduleRepo.findByApplicationIdOrderByPaymentNoAsc(appId);
         for (PaymentScheduleItem r : rows) {
             if (r.getPaymentTotal() != null) total = total.add(r.getPaymentTotal());
             if (r.getPaymentInterest() != null) totalInterest = totalInterest.add(r.getPaymentInterest());
@@ -264,12 +338,4 @@ public class LeaseContractController {
 
         return "contracts/print_schedule";
     }
-
-
-
-    private java.math.BigDecimal nvl(java.math.BigDecimal v) {
-        return v == null ? java.math.BigDecimal.ZERO : v;
-    }
-
-
 }
