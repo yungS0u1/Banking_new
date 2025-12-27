@@ -16,7 +16,16 @@
 
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                 <span class="pill" th:text="${app.status}">STATUS</span>
+
                 <a class="btn" th:href="@{/applications}">Назад</a>
+
+                <!-- EDIT button: только для NEW -->
+                <a class="btn"
+                   th:if="${app.status.name() == 'NEW'}"
+                   th:href="@{/applications/{id}/edit(id=${app.id})}">
+                    Редактировать
+                </a>
+
                 <a class="btn" th:href="@{/applications/{id}/print(id=${app.id})}">Печать</a>
             </div>
         </div>

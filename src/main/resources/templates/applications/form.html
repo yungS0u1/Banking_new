@@ -1,67 +1,162 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout/app :: page('Создание заявки · Banking', ${active}, ~{::content})}">
+      th:replace="~{layout/app :: page(${pageTitle}, ${active}, ~{::content})}">
 
 <th:block th:fragment="content">
 
     <div class="card" style="margin-bottom:14px;">
         <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
             <div>
-                <h2 style="margin:0;">Создание заявки</h2>
-                <div class="muted">Заполни параметры — система рассчитает график платежей.</div>
+                <h2 style="margin:0;" th:text="${pageH1}">Создание заявки</h2>
+                <div class="muted" th:text="${pageHint}">
+                    Заполни параметры — система рассчитает график платежей.
+                </div>
             </div>
-            <a class="btn" th:href="@{/applications}">Назад</a>
+
+            <a class="btn" th:attr="href=${backUrl}">Назад</a>
         </div>
     </div>
 
     <div class="card">
-        <form th:action="@{/applications}" th:object="${form}" method="post"
+        <form th:attr="action=${actionUrl}"
+              th:object="${form}" method="post"
               style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px;">
 
+            <!-- CLIENT -->
             <div>
                 <div class="muted" style="font-size:12px; margin-bottom:6px;">Клиент</div>
-                <select class="input" th:field="*{clientId}" required>
-                    <option value="" disabled selected>Выберите клиента</option>
-                    <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.name}"></option>
+
+                <input id="clientSearch"
+                       class="input"
+                       type="search"
+                       placeholder="Поиск по имени / названию..."
+                       autocomplete="off"
+                       style="margin-bottom:8px;" />
+
+                <select id="clientSelect" class="input" th:field="*{clientId}" required>
+                    <option value="" disabled>Выберите клиента</option>
+                    <option th:each="c : ${clients}"
+                            th:value="${c.id}"
+                            th:text="${c.name}">
+                    </option>
                 </select>
+
+                <div class="muted" style="font-size:12px; margin-top:6px;">
+                    Начни вводить — список отфильтруется. Esc очищает поиск.
+                </div>
             </div>
 
+            <!-- ASSET -->
             <div>
                 <div class="muted" style="font-size:12px; margin-bottom:6px;">Объект лизинга</div>
-                <select class="input" th:field="*{assetId}" required>
-                    <option value="" disabled selected>Выберите объект</option>
-                    <option th:each="a : ${assets}" th:value="${a.id}"
-                            th:text="${a.name + ' — ' + a.price}"></option>
+
+                <input id="assetSearch"
+                       class="input"
+                       type="search"
+                       placeholder="Поиск по объектам..."
+                       autocomplete="off"
+                       style="margin-bottom:8px;" />
+
+                <select id="assetSelect" class="input" th:field="*{assetId}" required>
+                    <option value="" disabled>Выберите объект</option>
+                    <option th:each="a : ${assets}"
+                            th:value="${a.id}"
+                            th:text="${a.name + ' — ' + a.price}">
+                    </option>
                 </select>
+
+                <div class="muted" style="font-size:12px; margin-top:6px;">
+                    Начни вводить — список отфильтруется. Esc очищает поиск.
+                </div>
             </div>
 
+            <!-- ADVANCE -->
             <div>
                 <div class="muted" style="font-size:12px; margin-bottom:6px;">Аванс</div>
                 <input class="input" type="number" step="0.01" min="0" th:field="*{advanceAmount}" />
             </div>
 
+            <!-- START DATE -->
             <div>
                 <div class="muted" style="font-size:12px; margin-bottom:6px;">Дата начала</div>
                 <input class="input" type="date" th:field="*{startDate}" required/>
             </div>
 
+            <!-- TERM -->
             <div>
                 <div class="muted" style="font-size:12px; margin-bottom:6px;">Срок (мес.)</div>
                 <input class="input" type="number" min="1" max="120" th:field="*{termMonths}" required/>
             </div>
 
+            <!-- RATE -->
             <div>
                 <div class="muted" style="font-size:12px; margin-bottom:6px;">Ставка (% годовых)</div>
                 <input class="input" type="number" step="0.01" min="0" max="100" th:field="*{annualRatePercent}" required/>
             </div>
 
+            <!-- ACTIONS -->
             <div style="grid-column: 1 / -1; display:flex; gap:10px; margin-top: 6px;">
-                <button class="btn primary" type="submit">Создать</button>
-                <a class="btn" th:href="@{/applications}">Отмена</a>
+                <button class="btn primary" type="submit" th:text="${submitLabel}">Создать</button>
+                <a class="btn" th:attr="href=${backUrl}">Отмена</a>
             </div>
 
         </form>
     </div>
+
+    <script>
+        (function () {
+          function setupSearch(searchId, selectId) {
+            var search = document.getElementById(searchId);
+            var select = document.getElementById(selectId);
+            if (!search || !select) return;
+
+            var all = Array.prototype.slice.call(select.options).map(function (opt) {
+              return { value: opt.value, text: opt.text, disabled: opt.disabled };
+            });
+
+            function norm(s) { return (s || '').toString().toLowerCase().trim(); }
+
+            function rebuild(list) {
+              var current = select.value;
+
+              select.innerHTML = '';
+              list.forEach(function (o) {
+                var opt = document.createElement('option');
+                opt.value = o.value;
+                opt.text = o.text;
+                opt.disabled = !!o.disabled;
+                select.appendChild(opt);
+              });
+
+              select.value = current;
+            }
+
+            search.addEventListener('input', function () {
+              var q = norm(search.value);
+
+              if (!q) { rebuild(all); return; }
+
+              var filtered = all.filter(function (o, idx) {
+                if (idx === 0) return true; // placeholder
+                return norm(o.text).indexOf(q) !== -1;
+              });
+
+              rebuild(filtered);
+            });
+
+            search.addEventListener('keydown', function (e) {
+              if (e.key === 'Escape') {
+                search.value = '';
+                rebuild(all);
+                search.blur();
+              }
+            });
+          }
+
+          setupSearch('clientSearch', 'clientSelect');
+          setupSearch('assetSearch', 'assetSelect');
+        })();
+    </script>
 
 </th:block>
 </html>

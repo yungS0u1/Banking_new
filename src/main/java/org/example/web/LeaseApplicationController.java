@@ -44,27 +44,27 @@ public class LeaseApplicationController {
     @GetMapping
     public String list(Model model) {
         model.addAttribute("active", "applications");
-        model.addAttribute("apps", appRepo.findAll()); // или сортировка, если есть
+        model.addAttribute("apps", appRepo.findAll());
         return "applications/list";
     }
-
-
     @GetMapping("/new")
     public String createForm(Model model) {
         LeaseApplicationForm form = new LeaseApplicationForm();
-
         form.setTermMonths(36);
         form.setAnnualRatePercent(new BigDecimal("14"));
         form.setAdvanceAmount(new BigDecimal("0"));
-        form.setStartDate(LocalDate.now().toString()); // если startDate в форме String
+        form.setStartDate(LocalDate.now().toString());
 
         model.addAttribute("active", "applications");
+        model.addAttribute("mode", "create");
+        model.addAttribute("appId", null);
+        model.addAttribute("actionUrl", "/applications");
+
         model.addAttribute("form", form);
         model.addAttribute("clients", clientRepo.findAll());
         model.addAttribute("assets", assetRepo.findAll());
         return "applications/form";
     }
-
 
     @PostMapping
     public String create(@ModelAttribute("form") LeaseApplicationForm form) {
@@ -73,40 +73,11 @@ public class LeaseApplicationController {
         app.setCreatedDate(LocalDate.now());
         app.setStatus(LeaseApplication.Status.NEW);
 
-        app.setClient(clientRepo.findById(form.getClientId()).orElseThrow(IllegalArgumentException::new));
-        LeasedAsset asset = assetRepo.findById(form.getAssetId()).orElseThrow(IllegalArgumentException::new);
-        app.setAsset(asset);
-
-        BigDecimal price = asset.getPrice() == null ? BigDecimal.ZERO : asset.getPrice();
-        BigDecimal advance = form.getAdvanceAmount() == null ? BigDecimal.ZERO : form.getAdvanceAmount();
-        if (advance.compareTo(BigDecimal.ZERO) < 0) advance = BigDecimal.ZERO;
-
-        BigDecimal financed = price.subtract(advance);
-        if (financed.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Financed amount must be > 0 (price - advance)");
-        }
-
-        if (form.getStartDate() == null || form.getStartDate().trim().isEmpty()) {
-            throw new IllegalArgumentException("Start date is required");
-        }
-
-        app.setAssetPrice(price);
-        app.setAdvanceAmount(advance);
-        app.setFinancedAmount(financed);
-
-        app.setTermMonths(form.getTermMonths());
-        app.setAnnualRatePercent(form.getAnnualRatePercent());
-        LocalDate start = LocalDate.parse(form.getStartDate()); // ожидает yyyy-MM-dd
-        app.setStartDate(start);
-
+        applyFormToApp(app, form);
 
         app = appRepo.save(app);
 
-        List<PaymentScheduleItem> schedule = calcService.buildAnnuitySchedule(app);
-        for (PaymentScheduleItem item : schedule) {
-            item.setApplication(app);
-        }
-        scheduleRepo.saveAll(schedule);
+        rebuildSchedule(app);
 
         return "redirect:/applications/" + app.getId();
     }
@@ -119,6 +90,55 @@ public class LeaseApplicationController {
         model.addAttribute("schedule", scheduleRepo.findByApplicationIdOrderByPaymentNoAsc(id));
         return "applications/view";
     }
+
+    // ---------- EDIT ----------
+
+    @GetMapping("/{id}/edit")
+    public String editForm(@PathVariable Long id, Model model) {
+        LeaseApplication app = appRepo.findById(id).orElseThrow(IllegalArgumentException::new);
+
+        if (app.getStatus() != LeaseApplication.Status.NEW) {
+            return "redirect:/applications/" + id;
+        }
+
+        LeaseApplicationForm form = new LeaseApplicationForm();
+        form.setClientId(app.getClient() != null ? app.getClient().getId() : null);
+        form.setAssetId(app.getAsset() != null ? app.getAsset().getId() : null);
+        form.setAdvanceAmount(app.getAdvanceAmount() != null ? app.getAdvanceAmount() : BigDecimal.ZERO);
+        form.setTermMonths(app.getTermMonths());
+        form.setAnnualRatePercent(app.getAnnualRatePercent());
+        form.setStartDate(app.getStartDate() != null ? app.getStartDate().toString() : LocalDate.now().toString());
+
+        model.addAttribute("active", "applications");
+        model.addAttribute("mode", "edit");
+        model.addAttribute("appId", id);
+        model.addAttribute("actionUrl", "/applications/" + id);
+
+        model.addAttribute("form", form);
+        model.addAttribute("clients", clientRepo.findAll());
+        model.addAttribute("assets", assetRepo.findAll());
+        return "applications/form";
+    }
+
+
+    @PostMapping("/{id}")
+    public String update(@PathVariable Long id, @ModelAttribute("form") LeaseApplicationForm form) {
+        LeaseApplication app = appRepo.findById(id).orElseThrow(IllegalArgumentException::new);
+
+        if (app.getStatus() != LeaseApplication.Status.NEW) {
+            return "redirect:/applications/" + id;
+        }
+
+        applyFormToApp(app, form);
+
+        appRepo.save(app);
+
+        rebuildSchedule(app);
+
+        return "redirect:/applications/" + id;
+    }
+
+    // ---------- STATUS ACTIONS ----------
 
     @PostMapping("/{id}/approve")
     public String approve(@PathVariable Long id) {
@@ -151,7 +171,45 @@ public class LeaseApplicationController {
         return "applications/print";
     }
 
+    // ---------- HELPERS ----------
 
+    private void applyFormToApp(LeaseApplication app, LeaseApplicationForm form) {
+        app.setClient(clientRepo.findById(form.getClientId()).orElseThrow(IllegalArgumentException::new));
 
+        LeasedAsset asset = assetRepo.findById(form.getAssetId()).orElseThrow(IllegalArgumentException::new);
+        app.setAsset(asset);
 
+        BigDecimal price = asset.getPrice() == null ? BigDecimal.ZERO : asset.getPrice();
+        BigDecimal advance = form.getAdvanceAmount() == null ? BigDecimal.ZERO : form.getAdvanceAmount();
+        if (advance.compareTo(BigDecimal.ZERO) < 0) advance = BigDecimal.ZERO;
+
+        BigDecimal financed = price.subtract(advance);
+        if (financed.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Financed amount must be > 0 (price - advance)");
+        }
+
+        if (form.getStartDate() == null || form.getStartDate().trim().isEmpty()) {
+            throw new IllegalArgumentException("Start date is required");
+        }
+
+        app.setAssetPrice(price);
+        app.setAdvanceAmount(advance);
+        app.setFinancedAmount(financed);
+
+        app.setTermMonths(form.getTermMonths());
+        app.setAnnualRatePercent(form.getAnnualRatePercent());
+        app.setStartDate(LocalDate.parse(form.getStartDate())); // yyyy-MM-dd
+    }
+
+    private void rebuildSchedule(LeaseApplication app) {
+        // удаляем старый график
+        // если у репозитория нет такого метода — см. пункт 2 ниже
+        scheduleRepo.deleteByApplicationId(app.getId());
+
+        List<PaymentScheduleItem> schedule = calcService.buildAnnuitySchedule(app);
+        for (PaymentScheduleItem item : schedule) {
+            item.setApplication(app);
+        }
+        scheduleRepo.saveAll(schedule);
+    }
 }
