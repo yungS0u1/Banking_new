@@ -2,6 +2,7 @@ package org.example.web;
 
 import org.example.domain.LeaseApplication;
 import org.example.domain.LeaseContract;
+import org.example.domain.PaymentScheduleItem;
 import org.example.repo.LeaseApplicationRepository;
 import org.example.repo.LeaseContractRepository;
 import org.example.repo.PaymentScheduleItemRepository;
@@ -218,6 +219,52 @@ public class LeaseContractController {
         // Ниже в шаблоне я сделаю безопасный вывод через ?:
         return "contracts/print-purchase";
     }
+
+    @GetMapping("/{id}/print-lease")
+    public String printLease(@PathVariable Long id, Model model) {
+        LeaseContract c = contractRepo.findById(id).orElseThrow(IllegalArgumentException::new);
+
+        model.addAttribute("contract", c);
+        model.addAttribute("app", c.getApplication());
+
+        // для текста договора полезно иметь supplier/asset/insurer
+        model.addAttribute("client", c.getApplication().getClient());
+        model.addAttribute("asset", c.getApplication().getAsset());
+        model.addAttribute("supplier", c.getApplication().getAsset() != null ? c.getApplication().getAsset().getSupplier() : null);
+        model.addAttribute("insurer", c.getApplication().getAsset() != null ? c.getApplication().getAsset().getInsurer() : null);
+
+        return "contracts/print_lease";
+    }
+
+    @GetMapping("/{id}/print-schedule")
+    public String printSchedule(@PathVariable Long id, Model model) {
+        LeaseContract c = contractRepo.findById(id).orElseThrow(IllegalArgumentException::new);
+        Long appId = c.getApplication().getId();
+
+        model.addAttribute("contract", c);
+        model.addAttribute("app", c.getApplication());
+        model.addAttribute("schedule", scheduleRepo.findByApplicationIdOrderByPaymentNoAsc(appId));
+
+        // опционально: итоговые суммы
+        // (итоги можно и на thymeleaf посчитать, но проще на java)
+        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal totalInterest = BigDecimal.ZERO;
+        BigDecimal totalPrincipal = BigDecimal.ZERO;
+
+        List<PaymentScheduleItem> rows = scheduleRepo.findByApplicationIdOrderByPaymentNoAsc(appId);
+        for (PaymentScheduleItem r : rows) {
+            if (r.getPaymentTotal() != null) total = total.add(r.getPaymentTotal());
+            if (r.getPaymentInterest() != null) totalInterest = totalInterest.add(r.getPaymentInterest());
+            if (r.getPaymentPrincipal() != null) totalPrincipal = totalPrincipal.add(r.getPaymentPrincipal());
+        }
+
+        model.addAttribute("totalPayments", total);
+        model.addAttribute("totalInterest", totalInterest);
+        model.addAttribute("totalPrincipal", totalPrincipal);
+
+        return "contracts/print_schedule";
+    }
+
 
 
     private java.math.BigDecimal nvl(java.math.BigDecimal v) {

@@ -18,8 +18,9 @@
 
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                 <a class="btn" th:href="@{/contracts}">К списку</a>
-                <a class="btn" th:href="@{/contracts/{id}/print(id=${contract.id})}">Печать (лизинг)</a>
-                <a class="btn" th:href="@{/contracts/{id}/print-purchase(id=${contract.id})}">Печать (ДКП)</a>
+                <a class="btn" th:href="@{/contracts/{id}/print-lease(id=${contract.id})}">Печать: Договор лизинга</a>
+                <a class="btn" th:href="@{/contracts/{id}/print-schedule(id=${contract.id})}">Печать: Приложение №1 (График)</a>
+                <a class="btn" th:href="@{/contracts/{id}/print(id=${contract.id})}">Печать: ДКП</a>
             </div>
         </div>
     </div>
